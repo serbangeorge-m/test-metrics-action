@@ -1,0 +1,192 @@
+import * as core from '@actions/core';
+import { TestMetrics, TrendData } from '../types';
+import { TrendAnalyzer } from '../metrics/trends';
+
+export class SummaryReporter {
+  private trendAnalyzer: TrendAnalyzer;
+
+  constructor() {
+    this.trendAnalyzer = new TrendAnalyzer();
+  }
+
+  async generateJobSummary(
+    metrics: TestMetrics,
+    historicalData: TrendData[],
+    framework: string
+  ): Promise<void> {
+    const summary = this.trendAnalyzer.getTrendSummary(metrics, historicalData);
+    const insights = this.trendAnalyzer.getPerformanceInsights(metrics, historicalData);
+    
+    let summaryMarkdown = `# 🧪 Test Metrics Report (${framework})\n\n`;
+    
+    // Main summary table
+    summaryMarkdown += this.generateSummaryTable(metrics, summary);
+    
+    // Performance insights
+    if (insights.length > 0) {
+      summaryMarkdown += `\n## 📊 Performance Insights\n\n`;
+      insights.forEach(insight => {
+        summaryMarkdown += `- ${insight}\n`;
+      });
+    }
+    
+    // Test execution details
+    summaryMarkdown += `\n## 📈 Test Execution Details\n\n`;
+    summaryMarkdown += this.generateExecutionDetails(metrics);
+    
+    // Flaky tests section
+    if (metrics.flakyTests.length > 0) {
+      summaryMarkdown += `\n## �� Flaky Tests Detected\n\n`;
+      summaryMarkdown += this.generateFlakyTestsTable(metrics.flakyTests);
+    }
+    
+    // Slow tests section
+    if (metrics.slowTests.length > 0) {
+      summaryMarkdown += `\n## 🐌 Slowest Tests (Top 5%)\n\n`;
+      summaryMarkdown += this.generateSlowTestsTable(metrics.slowTests);
+    }
+    
+    // Failure categories
+    if (metrics.failureCategories.length > 0) {
+      summaryMarkdown += `\n## ❌ Failure Analysis\n\n`;
+      summaryMarkdown += this.generateFailureCategoriesTable(metrics.failureCategories);
+    }
+    
+    // Trend chart (simple ASCII)
+    if (historicalData.length > 1) {
+      summaryMarkdown += `\n## 📊 Performance Trend (Last 7 Days)\n\n`;
+      summaryMarkdown += this.generateTrendChart(historicalData.slice(-7));
+    }
+    
+    // Write to GitHub Actions job summary
+    await core.summary
+      .addRaw(summaryMarkdown)
+      .write();
+  }
+
+  private generateSummaryTable(metrics: TestMetrics, summary: any): string {
+    const statusEmoji = this.getStatusEmoji(metrics.passRate);
+    const durationTrend = this.getTrendEmoji(summary.durationTrend.trend);
+    const passRateTrend = this.getTrendEmoji(summary.passRateTrend.trend);
+    
+    return `| Metric | Current | Previous | Change | Status |
+|--------|---------|----------|--------|--------|
+| **Tests** | ${metrics.totalTests} | ${summary.testCountTrend.previous} | ${this.formatChange(summary.testCountTrend)} | ${this.getTrendEmoji(summary.testCountTrend.trend)} |
+| **Pass Rate** | ${metrics.passRate.toFixed(1)}% | ${summary.passRateTrend.previous.toFixed(1)}% | ${this.formatChange(summary.passRateTrend)} | ${passRateTrend} |
+| **Duration** | ${(metrics.totalDuration / 1000).toFixed(1)}s | ${(summary.durationTrend.previous / 1000).toFixed(1)}s | ${this.formatChange(summary.durationTrend)} | ${durationTrend} |
+| **Flaky Tests** | ${metrics.flakyTests.length} | ${summary.flakyTestsTrend.previous} | ${this.formatChange(summary.flakyTestsTrend)} | ${this.getTrendEmoji(summary.flakyTestsTrend.trend)} |
+
+**Overall Status:** ${statusEmoji} ${metrics.passedTests}/${metrics.totalTests} tests passed\n\n`;
+  }
+
+  private generateExecutionDetails(metrics: TestMetrics): string {
+    const passed = metrics.passedTests;
+    const failed = metrics.failedTests;
+    const skipped = metrics.skippedTests;
+    const total = metrics.totalTests;
+    
+    const passedBar = this.generateProgressBar(passed, total, '🟢');
+    const failedBar = this.generateProgressBar(failed, total, '🔴');
+    const skippedBar = this.generateProgressBar(skipped, total, '🟡');
+    
+    return `
+### Test Results Breakdown
+- **Passed:** ${passedBar} ${passed} (${((passed/total)*100).toFixed(1)}%)
+- **Failed:** ${failedBar} ${failed} (${((failed/total)*100).toFixed(1)}%)
+- **Skipped:** ${skippedBar} ${skipped} (${((skipped/total)*100).toFixed(1)}%)
+
+**Average test duration:** ${metrics.averageDuration.toFixed(0)}ms
+`;
+  }
+
+  private generateFlakyTestsTable(flakyTests: any[]): string {
+    let table = `| Test Name | Flakiness Score | Retry Count | Pattern |\n`;
+    table += `|-----------|-----------------|-------------|----------|\n`;
+    
+    flakyTests.slice(0, 10).forEach(test => {
+      const score = (test.flakinessScore * 100).toFixed(0);
+      table += `| ${test.name} | ${score}% | ${test.retryCount} | ${test.failurePattern} |\n`;
+    });
+    
+    if (flakyTests.length > 10) {
+      table += `\n*... and ${flakyTests.length - 10} more flaky tests*\n`;
+    }
+    
+    return table;
+  }
+
+  private generateSlowTestsTable(slowTests: any[]): string {
+    let table = `| Test Name | Duration | Suite |\n`;
+    table += `|-----------|----------|-------|\n`;
+    
+    slowTests.slice(0, 10).forEach(test => {
+      const duration = (test.duration / 1000).toFixed(2);
+      table += `| ${test.name} | ${duration}s | ${test.suite} |\n`;
+    });
+    
+    return table;
+  }
+
+  private generateFailureCategoriesTable(categories: any[]): string {
+    let table = `| Category | Count | Percentage | Tests |\n`;
+    table += `|----------|-------|------------|-------|\n`;
+    
+    categories.forEach(category => {
+      const testList = category.tests.slice(0, 3).join(', ');
+      const more = category.tests.length > 3 ? ` +${category.tests.length - 3} more` : '';
+      table += `| ${category.type} | ${category.count} | ${category.percentage.toFixed(1)}% | ${testList}${more} |\n`;
+    });
+    
+    return table;
+  }
+
+  private generateTrendChart(historicalData: TrendData[]): string {
+    if (historicalData.length < 2) return 'Not enough data for trend chart\n';
+    
+    const durations = historicalData.map(d => d.metrics.totalDuration);
+    const minDuration = Math.min(...durations);
+    const maxDuration = Math.max(...durations);
+    const range = maxDuration - minDuration;
+    
+    if (range === 0) return 'No variation in test duration\n';
+    
+    let chart = '```\n';
+    chart += 'Duration Trend (seconds):\n';
+    
+    durations.forEach((duration, index) => {
+      const normalized = (duration - minDuration) / range;
+      const barLength = Math.round(normalized * 20);
+      const bar = '█'.repeat(barLength) + '░'.repeat(20 - barLength);
+      const date = new Date(historicalData[index].timestamp).toLocaleDateString();
+      chart += `${date}: ${bar} ${(duration / 1000).toFixed(1)}s\n`;
+    });
+    
+    chart += '```\n';
+    return chart;
+  }
+
+  private generateProgressBar(value: number, total: number, emoji: string): string {
+    const percentage = total > 0 ? (value / total) * 100 : 0;
+    const barLength = Math.round(percentage / 5); // 20 chars max
+    return emoji.repeat(barLength) + '░'.repeat(Math.max(0, 20 - barLength));
+  }
+
+  private getStatusEmoji(passRate: number): string {
+    if (passRate >= 95) return '🟢';
+    if (passRate >= 80) return '🟡';
+    return '🔴';
+  }
+
+  private getTrendEmoji(trend: string): string {
+    switch (trend) {
+      case 'improving': return '📈';
+      case 'declining': return '📉';
+      default: return '➡️';
+    }
+  }
+
+  private formatChange(trend: any): string {
+    const sign = trend.change > 0 ? '+' : '';
+    return `${sign}${trend.change.toFixed(1)} (${sign}${trend.changePercent.toFixed(1)}%)`;
+  }
+}

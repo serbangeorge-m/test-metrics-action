@@ -1,0 +1,60 @@
+name: 'Test Metrics Reporter'
+description: 'Advanced test metrics and visual reporting for Jest, Playwright, and JUnit tests'
+author: 'Your Name'
+inputs:
+  report_paths:
+    description: 'Path to test result files (JUnit XML, Jest JSON, Playwright JSON)'
+    required: true
+    default: '**/*results.xml'
+  test_framework:
+    description: 'Test framework type'
+    required: false
+    default: 'auto'
+  annotate_only:
+    description: 'Only annotate PR with results, do not fail the action'
+    required: false
+    default: 'false'
+  fail_on_failure:
+    description: 'Fail the action if tests failed'
+    required: false
+    default: 'true'
+  include_passed:
+    description: 'Include passed tests in annotations'
+    required: false
+    default: 'true'
+  detailed_summary:
+    description: 'Include detailed summary in job summary'
+    required: false
+    default: 'true'
+  require_tests:
+    description: 'Require at least one test result'
+    required: false
+    default: 'true'
+  retention_days:
+    description: 'Number of days to retain trend data'
+    required: false
+    default: '30'
+  cache_key_prefix:
+    description: 'Prefix for cache key to separate different test suites'
+    required: false
+    default: 'test-metrics'
+outputs:
+  total_tests:
+    description: 'Total number of tests'
+  passed_tests:
+    description: 'Number of passed tests'
+  failed_tests:
+    description: 'Number of failed tests'
+  skipped_tests:
+    description: 'Number of skipped tests'
+  pass_rate:
+    description: 'Test pass rate percentage'
+  total_duration:
+    description: 'Total test duration in seconds'
+  flaky_tests_count:
+    description: 'Number of flaky tests detected'
+  performance_trend:
+    description: 'Performance trend compared to previous runs'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

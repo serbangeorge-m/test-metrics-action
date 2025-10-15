@@ -1,0 +1,52 @@
+[
+  {
+    "title": "Login functionality",
+    "status": "passed",
+    "duration": 2500,
+    "file": "tests/login.spec.ts",
+    "suite": "Authentication"
+  },
+  {
+    "title": "User registration",
+    "status": "passed",
+    "duration": 3200,
+    "file": "tests/register.spec.ts",
+    "suite": "Authentication"
+  },
+  {
+    "title": "Password reset flow",
+    "status": "failed",
+    "duration": 1500,
+    "file": "tests/reset-password.spec.ts",
+    "suite": "Authentication",
+    "error": {
+      "message": "Timeout: Element not found within 5 seconds"
+    },
+    "retry": 2
+  },
+  {
+    "title": "Dashboard loads correctly",
+    "status": "passed",
+    "duration": 1800,
+    "file": "tests/dashboard.spec.ts",
+    "suite": "Dashboard"
+  },
+  {
+    "title": "Navigation works",
+    "status": "passed",
+    "duration": 900,
+    "file": "tests/navigation.spec.ts",
+    "suite": "Navigation"
+  },
+  {
+    "title": "API integration test",
+    "status": "failed",
+    "duration": 5000,
+    "file": "tests/api.spec.ts",
+    "suite": "API",
+    "error": {
+      "message": "Network error: Connection timeout"
+    },
+    "retry": 1
+  }
+]

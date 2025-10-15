@@ -1,0 +1,60 @@
+{
+  "success": true,
+  "startTime": 1703000000000,
+  "endTime": 1703000050000,
+  "numTotalTestSuites": 3,
+  "numPassedTestSuites": 2,
+  "numFailedTestSuites": 1,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 10,
+  "numPassedTests": 8,
+  "numFailedTests": 1,
+  "numPendingTests": 1,
+  "testResults": [
+    {
+      "name": "/src/components/Button.test.js",
+      "startTime": 1703000000000,
+      "endTime": 1703000020000,
+      "assertionResults": [
+        {
+          "title": "should render button",
+          "status": "passed",
+          "duration": 50
+        },
+        {
+          "title": "should handle click events",
+          "status": "passed",
+          "duration": 75
+        },
+        {
+          "title": "should be disabled when loading",
+          "status": "failed",
+          "duration": 100,
+          "failureMessages": ["Expected false to be true"]
+        }
+      ]
+    },
+    {
+      "name": "/src/utils/helpers.test.js",
+      "startTime": 1703000020000,
+      "endTime": 1703000040000,
+      "assertionResults": [
+        {
+          "title": "should format date correctly",
+          "status": "passed",
+          "duration": 25
+        },
+        {
+          "title": "should validate email format",
+          "status": "passed",
+          "duration": 30
+        },
+        {
+          "title": "should handle edge cases",
+          "status": "passed",
+          "duration": 45
+        }
+      ]
+    }
+  ]
+}

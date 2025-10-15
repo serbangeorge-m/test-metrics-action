@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="com.example.tests.UserServiceTest" tests="5" failures="1" errors="0" skipped="1" time="2.5">
+    <testcase name="testCreateUser" classname="com.example.tests.UserServiceTest" time="0.5"/>
+    <testcase name="testUpdateUser" classname="com.example.tests.UserServiceTest" time="0.3"/>
+    <testcase name="testDeleteUser" classname="com.example.tests.UserServiceTest" time="0.2"/>
+    <testcase name="testGetUserById" classname="com.example.tests.UserServiceTest" time="0.4">
+      <failure message="User not found" type="AssertionError">
+        java.lang.AssertionError: User not found
+          at com.example.tests.UserServiceTest.testGetUserById(UserServiceTest.java:45)
+      </failure>
+    </testcase>
+    <testcase name="testGetAllUsers" classname="com.example.tests.UserServiceTest" time="1.1">
+      <skipped message="Not implemented yet"/>
+    </testcase>
+  </testsuite>
+  <testsuite name="com.example.tests.PaymentServiceTest" tests="3" failures="0" errors="0" skipped="0" time="1.8">
+    <testcase name="testProcessPayment" classname="com.example.tests.PaymentServiceTest" time="0.8"/>
+    <testcase name="testRefundPayment" classname="com.example.tests.PaymentServiceTest" time="0.6"/>
+    <testcase name="testValidateCard" classname="com.example.tests.PaymentServiceTest" time="0.4"/>
+  </testsuite>
+</testsuites>
