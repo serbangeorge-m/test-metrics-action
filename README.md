@@ -103,30 +103,6 @@ The action generates rich job summaries with:
 | `flaky_tests_count` | Number of flaky tests detected |
 | `performance_trend` | Performance trend compared to previous runs |
 
-## 🔄 Migration from mikepenz/action-junit-report
-
-Replace your existing mikepenz action:
-
-```yaml
-# Before
-- name: Publish Test Report
-  uses: mikepenz/action-junit-report@v5
-  if: always()
-  with:
-    report_paths: '**/*results.xml'
-    fail_on_failure: true
-    detailed_summary: true
-
-# After - Enhanced with advanced metrics
-- name: Publish Test Metrics
-  uses: serbangeorge-m/test-metrics-action@v1
-  if: always()
-  with:
-    report_paths: '**/*results.xml'
-    fail_on_failure: true
-    detailed_summary: true
-```
-
 ## 🧪 Supported Test Frameworks
 
 ### Jest
@@ -172,13 +148,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Inspired by `mikepenz/action-junit-report`
-- Built with GitHub Actions and TypeScript
-- Uses advanced caching for trend persistence
-
----
 
 **⭐ If you find this action useful, please give it a star!**

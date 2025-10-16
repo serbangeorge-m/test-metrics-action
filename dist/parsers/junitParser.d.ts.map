@@ -1,1 +1,0 @@
-{"version":3,"file":"junitParser.d.ts","sourceRoot":"","sources":["file:///Users/serbangeorge/src/parsers/junitParser.ts"],"names":[],"mappings":"AAEA,OAAO,EAAwC,cAAc,EAAE,MAAM,UAAU,CAAC;AAEhF,qBAAa,WAAW;IAChB,SAAS,CAAC,QAAQ,EAAE,MAAM,GAAG,OAAO,CAAC,cAAc,CAAC;IAY1D,OAAO,CAAC,aAAa;IAiDrB,OAAO,CAAC,mBAAmB;IAM3B,OAAO,CAAC,mBAAmB;CAS5B"}

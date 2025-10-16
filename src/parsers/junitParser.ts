@@ -23,14 +23,15 @@ export class JUnitParser {
       // Handle different JUnit XML structures
       let testSuitesArray: any[] = [];
 
-      // Case 1: Root is testsuites
-      if (xmlData.testsuites) {
-        const testsuites = xmlData.testsuites.testsuite || xmlData.testsuites;
+      // Case 1: Root is testsuites with nested testsuite elements
+      if (xmlData.testsuites && xmlData.testsuites.testsuite) {
+        const testsuites = xmlData.testsuites.testsuite;
         testSuitesArray = Array.isArray(testsuites) ? testsuites : [testsuites];
       }
       // Case 2: Root is testsuite
       else if (xmlData.testsuite) {
-        testSuitesArray = Array.isArray(xmlData.testsuite) ? xmlData.testsuite : [xmlData.testsuite];
+        const testsuites = xmlData.testsuite;
+        testSuitesArray = Array.isArray(testsuites) ? testsuites : [testsuites];
       }
       // Case 3: Direct test results (some tools generate this)
       else if (xmlData.tests || xmlData.testcase) {
