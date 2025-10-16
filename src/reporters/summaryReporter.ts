@@ -99,9 +99,9 @@ export class SummaryReporter {
     const avgDurUnit = avgDur >= 1 ? 's' : 'ms';
     
     return `
-- **Passed:** <span style="color: #22c55e;">**${passed}** (${passedPercent}%)</span>
-- **Failed:** <span style="color: #ef4444;">**${failed}** (${failedPercent}%)</span>
-- **Skipped:** <span style="color: #f59e0b;">**${skipped}** (${skippedPercent}%)</span>
+- 🟢 **Passed:** **${passed}** (${passedPercent}%)
+- 🔴 **Failed:** **${failed}** (${failedPercent}%)
+- 🟡 **Skipped:** **${skipped}** (${skippedPercent}%)
 
 **Average test duration:** ${displayAvgDur}${avgDurUnit}
 `;
