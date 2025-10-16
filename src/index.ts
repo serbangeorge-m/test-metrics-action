@@ -8,6 +8,7 @@ import { JestParser } from './parsers/jestParser';
 import { PlaywrightParser } from './parsers/playwrightParser';
 import { MetricsCalculator } from './metrics/calculator';
 import { TrendCache } from './storage/cache';
+import { GitHubTrendManager } from './storage/githubTrends';
 import { SummaryReporter } from './reporters/summaryReporter';
 import { ParsedTestData, TrendData } from './types';
 
@@ -91,6 +92,10 @@ async function run(): Promise<void> {
     };
     
     await trendCache.saveTrendData(currentTrendData);
+
+    // Also save to GitHub artifacts for longer-term history (90 days)
+    const gitHubTrendManager = new GitHubTrendManager(testFramework === 'auto' ? 'junit' : testFramework, 90);
+    await gitHubTrendManager.saveTrendArtifact(currentTrendData);
 
     // Set outputs
     core.setOutput('total_tests', metrics.totalTests.toString());
