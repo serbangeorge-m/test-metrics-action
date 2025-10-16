@@ -1,18 +1,14 @@
 # 🧪 Test Metrics Reporter
 
-[![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-Test%20Metrics%20Reporter-blue?logo=github)](https://github.com/marketplace/actions/test-metrics-reporter)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-
-Advanced test metrics and visual reporting for Jest, Playwright, and JUnit tests with trend analysis and flakiness detection.
+Advanced test metrics and visual reporting for Jest, Playwright, and JUnit tests.
 
 ## ✨ Features
 
-- 🎯 **Multi-framework Support**: Jest, Playwright, and JUnit XML reports
-- 📊 **Advanced Metrics**: Flakiness detection, performance analysis, failure categorization
-- 📈 **Trend Tracking**: Historical comparison with performance insights
-- 🎨 **Visual Reports**: Rich GitHub Actions job summaries with charts and tables
-- 🔄 **Drop-in Replacement**: Compatible with `mikepenz/action-junit-report`
+- 🎯 Multi-framework support (Jest, Playwright, JUnit XML)
+- 📊 Advanced metrics (pass rate, duration, flakiness, failures)
+- 📈 90-day trend tracking with GitHub Artifacts
+- 🎨 Rich visual reports in GitHub Actions job summaries
+- 🐛 Flakiness detection with retry analysis
 
 ## 🚀 Quick Start
 
@@ -36,15 +32,45 @@ Advanced test metrics and visual reporting for Jest, Playwright, and JUnit tests
     npm test -- --json --outputFile=test-results.json
     npx playwright test --reporter=json --output-file=playwright-results.json
 
-- name: Publish Test Metrics
+## 🚀 Quick Start
+
+```yaml
+- name: Test Metrics
   uses: serbangeorge-m/test-metrics-action@v1
   if: always()
   with:
-    report_paths: 'test-results.json,playwright-results.json'
-    test_framework: 'auto'
+    report_paths: '**/*results.xml'
+    fail_on_failure: true
     detailed_summary: true
-    retention_days: 30
-    cache_key_prefix: 'my-project-tests'
+```
+
+## 🔧 Inputs
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `report_paths` | `**/*results.xml` | Test result file patterns (glob) |
+| `test_framework` | `auto` | Framework: `auto`, `jest`, `playwright`, `junit` |
+| `detailed_summary` | `true` | Include detailed job summary |
+| `fail_on_failure` | `true` | Fail if tests failed |
+| `retention_days` | `30` | Cache retention (artifacts: 90 days) |
+
+## 📊 What It Does
+
+1. **Parses** test results from multiple frameworks
+2. **Calculates** metrics: pass rate, duration, flakiness, failures
+3. **Tracks** trends over 90 days with GitHub Artifacts
+4. **Reports** with visual summary, tables, and charts
+5. **Annotates** PRs with results (optional)
+
+## 🧪 Supported Formats
+
+- **JUnit XML**: `*.xml` files
+- **Jest JSON**: `--json --outputFile=results.json`
+- **Playwright JSON**: `--reporter=json`
+
+## 📄 License
+
+MIT
 ```
 
 ## 📊 Advanced Metrics
@@ -74,23 +100,40 @@ Advanced test metrics and visual reporting for Jest, Playwright, and JUnit tests
 
 The action generates rich job summaries with:
 
-- 📊 **Summary Table**: Current vs previous run comparison
-- �� **Performance Insights**: Automated analysis of trends
-- 🐛 **Flaky Tests Section**: Detailed flakiness analysis
-- 🐌 **Slow Tests**: Performance bottleneck identification
-- ❌ **Failure Analysis**: Categorized failure breakdown
-- 📊 **Trend Charts**: Visual performance trends
+- 📊 **Summary Table**: Current vs previous run metrics with trends (tests, pass rate, duration, flaky tests)
+- 📈 **Test Status**: Visual breakdown of passed/failed/skipped with percentages
+- ❌ **Failure Analysis**: Categorized failures (timeout, assertion, setup, network)
+- 🐛 **Flaky Tests**: Detailed flakiness scoring and retry patterns
+- 🐌 **Slow Tests**: Performance bottleneck identification (95th percentile)
+- 📊 **Trend Charts**: ASCII visualization of performance over time
 
 ## 🔧 Configuration
 
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
-| `report_paths` | Path to test result files | Yes | `**/*results.xml` |
-| `test_framework` | Test framework type (auto, jest, playwright, junit) | No | `auto` |
+| `report_paths` | Path to test result files (glob pattern) | Yes | `**/*results.xml` |
+| `test_framework` | Test framework type: `auto`, `jest`, `playwright`, `junit` | No | `auto` |
 | `detailed_summary` | Include detailed summary in job summary | No | `true` |
 | `fail_on_failure` | Fail action if tests failed | No | `true` |
-| `retention_days` | Days to retain trend data | No | `30` |
-| `cache_key_prefix` | Prefix for cache key | No | `test-metrics` |
+| `retention_days` | Days to retain trend data in cache (artifacts: 90 days) | No | `30` |
+| `cache_key_prefix` | Prefix for cache key to separate test suites | No | `test-metrics` |
+| `annotate_only` | Only annotate PR, don't fail the action | No | `false` |
+| `include_passed` | Include passed tests in PR annotations | No | `true` |
+| `require_tests` | Require at least one test result | No | `true` |
+
+## 📈 Trend Tracking
+
+The action automatically stores test metrics for trend analysis:
+
+- **GitHub Actions Cache**: 30-day rolling history for quick access
+- **GitHub Artifacts**: 90-day retention for long-term analysis
+- **Automatic Cleanup**: Expired data is automatically removed
+
+Trends help you:
+- Detect performance regressions
+- Monitor pass rate improvements
+- Track flaky test patterns
+- Identify slowest tests over time
 
 ## 📈 Outputs
 

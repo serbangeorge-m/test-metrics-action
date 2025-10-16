@@ -79,7 +79,10 @@ export class SummaryReporter {
     // Format metrics with better visual presentation
     const testsStatus = `${metrics.totalTests} tests`;
     const passRateValue = `${metrics.passRate.toFixed(1)}%`;
-    const durationValue = `${metrics.totalDuration.toFixed(2)}s`;
+    const durationValue = `${(metrics.totalDuration / 1000).toFixed(2)}s`;
+    const avgDurValue = metrics.averageDuration >= 1 ? 
+      `${metrics.averageDuration.toFixed(2)}s` : 
+      `${(metrics.averageDuration * 1000).toFixed(0)}ms`;
     const flakyValue = metrics.flakyTests.length;
     
     return `**Overall Status:** ${statusEmoji} ${metrics.passedTests}/${metrics.totalTests} tests passed
@@ -88,7 +91,8 @@ export class SummaryReporter {
 |:-------|:-------:|:--------:|:-----:|
 | 📊 Tests | ${testsStatus} | ${summary.testCountTrend.previous} | ${this.getTrendEmoji(summary.testCountTrend.trend)} ${this.formatTrendValue(summary.testCountTrend)} |
 | ✅ Pass Rate | ${passRateValue} | ${summary.passRateTrend.previous.toFixed(1)}% | ${passRateTrend} ${this.formatTrendValue(summary.passRateTrend)} |
-| ⏱️ Duration | ${durationValue} | ${summary.durationTrend.previous.toFixed(2)}s | ${durationTrend} ${this.formatTrendValue(summary.durationTrend)} |
+| ⏱️ Duration | ${durationValue} | ${(summary.durationTrend.previous / 1000).toFixed(2)}s | ${durationTrend} ${this.formatTrendValue(summary.durationTrend)} |
+| ⏱️ Avg Duration | ${avgDurValue} | — | — |
 | 🐛 Flaky | ${flakyValue} | ${summary.flakyTestsTrend.previous} | ${this.getTrendEmoji(summary.flakyTestsTrend.trend)} ${this.formatTrendValue(summary.flakyTestsTrend)} |
 
 \n`;
@@ -104,14 +108,19 @@ export class SummaryReporter {
     const failedPercent = ((failed/total)*100).toFixed(1);
     const skippedPercent = ((skipped/total)*100).toFixed(1);
     
-    // Format average duration (in seconds from calculator)
-    const avgDur = metrics.averageDuration;
-    const displayAvgDur = avgDur >= 1 ? avgDur.toFixed(2) : (avgDur * 1000).toFixed(0);
-    const avgDurUnit = avgDur >= 1 ? 's' : 'ms';
+    let table = `| Status | Count | Percentage |\n`;
+    table += `|--------|-------|------------|\n`;
+    table += `| 🟢 Passed | ${passed} | ${passedPercent}% |\n`;
     
-    return `🟢 **Passed:** **${passed}** (${passedPercent}%) | 🔴 **Failed:** **${failed}** (${failedPercent}%) | 🟡 **Skipped:** **${skipped}** (${skippedPercent}%)
-**Avg Duration:** ${displayAvgDur}${avgDurUnit}
-`;
+    if (failed > 0) {
+      table += `| 🔴 Failed | ${failed} | ${failedPercent}% |\n`;
+    }
+    
+    if (skipped > 0) {
+      table += `| 🟡 Skipped | ${skipped} | ${skippedPercent}% |\n`;
+    }
+    
+    return table + '\n';
   }
 
   private generateFlakyTestsTable(flakyTests: any[]): string {
