@@ -47,9 +47,11 @@ async function run(): Promise<void> {
     
     for (const file of files) {
       try {
+        core.info(`Parsing file: ${file}`);
         const data = await parseTestFile(file, testFramework);
+        console.log(`DEBUG: Parsed data from ${file}:`, JSON.stringify(data).substring(0, 300));
         parsedData.push(data);
-        core.info(`Parsed ${file} (${data.framework.type})`);
+        core.info(`Parsed ${file} (${data.framework.type}) - found ${data.suites.length} suites with ${data.suites.reduce((sum, s) => sum + s.tests.length, 0)} tests`);
       } catch (error) {
         core.warning(`Failed to parse ${file}: ${error}`);
       }

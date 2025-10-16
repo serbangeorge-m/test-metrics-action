@@ -51520,9 +51520,11 @@ async function run() {
         const parsedData = [];
         for (const file of files) {
             try {
+                core.info(`Parsing file: ${file}`);
                 const data = await parseTestFile(file, testFramework);
+                console.log(`DEBUG: Parsed data from ${file}:`, JSON.stringify(data).substring(0, 300));
                 parsedData.push(data);
-                core.info(`Parsed ${file} (${data.framework.type})`);
+                core.info(`Parsed ${file} (${data.framework.type}) - found ${data.suites.length} suites with ${data.suites.reduce((sum, s) => sum + s.tests.length, 0)} tests`);
             }
             catch (error) {
                 core.warning(`Failed to parse ${file}: ${error}`);
@@ -52171,20 +52173,27 @@ class JUnitParser {
         const suites = [];
         const timestamp = new Date().toISOString();
         try {
+            // Debug: log the parsed XML structure
+            console.log('DEBUG: Parsed XML structure:', JSON.stringify(xmlData, null, 2).substring(0, 500));
+            console.log('DEBUG: xmlData.testsuites:', !!xmlData.testsuites);
+            console.log('DEBUG: xmlData.testsuite:', !!xmlData.testsuite);
             // Handle different JUnit XML structures
             let testSuitesArray = [];
             // Case 1: Root is testsuites with nested testsuite elements
             if (xmlData.testsuites && xmlData.testsuites.testsuite) {
+                console.log('DEBUG: Processing testsuites -> testsuite');
                 const testsuites = xmlData.testsuites.testsuite;
                 testSuitesArray = Array.isArray(testsuites) ? testsuites : [testsuites];
             }
             // Case 2: Root is testsuite
             else if (xmlData.testsuite) {
+                console.log('DEBUG: Processing root testsuite');
                 const testsuites = xmlData.testsuite;
                 testSuitesArray = Array.isArray(testsuites) ? testsuites : [testsuites];
             }
             // Case 3: Direct test results (some tools generate this)
             else if (xmlData.tests || xmlData.testcase) {
+                console.log('DEBUG: Processing direct test results');
                 // Wrap in a virtual testsuite
                 testSuitesArray = [{
                         name: 'Test Results',
@@ -52196,9 +52205,11 @@ class JUnitParser {
                         testcase: xmlData.testcase || []
                     }];
             }
+            console.log(`DEBUG: Found ${testSuitesArray.length} test suites`);
             for (const testsuite of testSuitesArray) {
                 if (!testsuite)
                     continue;
+                console.log('DEBUG: Processing suite:', JSON.stringify(testsuite).substring(0, 200));
                 // Get attribute values - with mergeAttrs: true, attributes are merged directly
                 const testsCount = this.getAttributeValue(testsuite, 'tests');
                 const failuresCount = this.getAttributeValue(testsuite, 'failures');
@@ -52206,6 +52217,7 @@ class JUnitParser {
                 const skippedCount = this.getAttributeValue(testsuite, 'skipped');
                 const timeValue = this.getAttributeValue(testsuite, 'time');
                 const suiteName = this.getAttributeValue(testsuite, 'name') || 'Unknown Suite';
+                console.log(`DEBUG: Suite "${suiteName}" - tests: ${testsCount}, failures: ${failuresCount}, errors: ${errorsCount}, skipped: ${skippedCount}`);
                 const suite = {
                     name: suiteName,
                     tests: [],
@@ -52218,6 +52230,7 @@ class JUnitParser {
                 // Parse individual test cases
                 if (testsuite.testcase) {
                     const testcases = Array.isArray(testsuite.testcase) ? testsuite.testcase : [testsuite.testcase];
+                    console.log(`DEBUG: Suite has ${testcases.length} test cases`);
                     for (const testcase of testcases) {
                         if (!testcase)
                             continue;
@@ -52249,12 +52262,15 @@ class JUnitParser {
                 }
                 // If no testcases but we have counts, create virtual tests
                 if (suite.tests.length === 0 && suite.totalTests > 0) {
+                    console.log('DEBUG: Creating virtual tests based on counts');
                     suite.passedTests = suite.totalTests - (failuresCount + errorsCount + skippedCount);
                     suite.failedTests = failuresCount + errorsCount;
                     suite.skippedTests = skippedCount;
                 }
+                console.log(`DEBUG: Suite complete - total: ${suite.totalTests}, passed: ${suite.passedTests}, failed: ${suite.failedTests}, skipped: ${suite.skippedTests}`);
                 suites.push(suite);
             }
+            console.log(`DEBUG: Parsing complete - ${suites.length} suites, total tests: ${suites.reduce((sum, s) => sum + s.totalTests, 0)}`);
             return {
                 suites,
                 framework: { type: 'junit' },
