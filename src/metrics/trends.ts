@@ -138,7 +138,10 @@ export class TrendAnalyzer {
 
     // Slow tests insights
     if (currentMetrics.slowTests.length > 0) {
-      insights.push(`🐌 ${currentMetrics.slowTests.length} tests are in the slowest 5% (${(currentMetrics.slowTests[0].duration / 1000).toFixed(1)}s+)`);
+      const duration = currentMetrics.slowTests[0].duration;
+      const displayDuration = duration >= 1 ? duration.toFixed(2) : (duration * 1000).toFixed(0);
+      const unit = duration >= 1 ? 's' : 'ms';
+      insights.push(`🐌 ${currentMetrics.slowTests.length} tests are in the slowest 5% (${displayDuration}${unit}+)`);
     }
 
     return insights;

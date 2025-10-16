@@ -11,6 +11,9 @@ import { TrendCache } from './storage/cache';
 import { SummaryReporter } from './reporters/summaryReporter';
 import { ParsedTestData, TrendData } from './types';
 
+// Debug flag - controlled by environment variable
+const DEBUG = process.env.DEBUG_METRICS === 'true' || process.env.RUNNER_DEBUG === '1';
+
 async function run(): Promise<void> {
   try {
     // Get inputs
@@ -47,11 +50,12 @@ async function run(): Promise<void> {
     
     for (const file of files) {
       try {
-        core.info(`Parsing file: ${file}`);
+        if (DEBUG) core.info(`📄 Parsing file: ${file}`);
         const data = await parseTestFile(file, testFramework);
-        console.log(`DEBUG: Parsed data from ${file}:`, JSON.stringify(data).substring(0, 300));
+        if (DEBUG) console.log(`DEBUG: Parsed data from ${file}:`, JSON.stringify(data).substring(0, 300));
         parsedData.push(data);
-        core.info(`Parsed ${file} (${data.framework.type}) - found ${data.suites.length} suites with ${data.suites.reduce((sum, s) => sum + s.tests.length, 0)} tests`);
+        const testCount = data.suites.reduce((sum, s) => sum + s.tests.length, 0);
+        core.info(`✅ Parsed ${file} (${data.framework.type}) - found ${data.suites.length} suites with ${testCount} tests`);
       } catch (error) {
         core.warning(`Failed to parse ${file}: ${error}`);
       }

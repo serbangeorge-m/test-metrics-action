@@ -120,8 +120,11 @@ export class SummaryReporter {
     table += `|-----------|----------|-------|\n`;
     
     slowTests.slice(0, 10).forEach(test => {
-      const duration = (test.duration / 1000).toFixed(2);
-      table += `| ${test.name} | ${duration}s | ${test.suite} |\n`;
+      // Duration is stored in seconds from XML, display appropriately
+      const durationSec = test.duration;
+      const displayDuration = durationSec >= 1 ? durationSec.toFixed(2) : (durationSec * 1000).toFixed(0);
+      const unit = durationSec >= 1 ? 's' : 'ms';
+      table += `| ${test.name} | ${displayDuration}${unit} | ${test.suite} |\n`;
     });
     
     return table;
