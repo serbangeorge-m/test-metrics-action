@@ -85,9 +85,9 @@ export class SummaryReporter {
     const skipped = metrics.skippedTests;
     const total = metrics.totalTests;
     
-    const passedBar = this.generateProgressBar(passed, total, '🟢');
-    const failedBar = this.generateProgressBar(failed, total, '🔴');
-    const skippedBar = this.generateProgressBar(skipped, total, '🟡');
+    const passedPercent = ((passed/total)*100).toFixed(1);
+    const failedPercent = ((failed/total)*100).toFixed(1);
+    const skippedPercent = ((skipped/total)*100).toFixed(1);
     
     // Format average duration (in seconds from calculator)
     const avgDur = metrics.averageDuration;
@@ -96,9 +96,9 @@ export class SummaryReporter {
     
     return `
 ### Test Results Breakdown
-- **Passed:** ${passedBar} ${passed} (${((passed/total)*100).toFixed(1)}%)
-- **Failed:** ${failedBar} ${failed} (${((failed/total)*100).toFixed(1)}%)
-- **Skipped:** ${skippedBar} ${skipped} (${((skipped/total)*100).toFixed(1)}%)
+- **Passed:** <span style="color: #22c55e;">**${passed}** (${passedPercent}%)</span>
+- **Failed:** <span style="color: #ef4444;">**${failed}** (${failedPercent}%)</span>
+- **Skipped:** <span style="color: #f59e0b;">**${skipped}** (${skippedPercent}%)</span>
 
 **Average test duration:** ${displayAvgDur}${avgDurUnit}
 `;
