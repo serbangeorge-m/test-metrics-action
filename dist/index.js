@@ -52601,39 +52601,42 @@ class SummaryReporter {
         const summary = this.trendAnalyzer.getTrendSummary(metrics, historicalData);
         const insights = this.trendAnalyzer.getPerformanceInsights(metrics, historicalData);
         let summaryMarkdown = `# 🧪 Test Metrics Report (${framework})\n\n`;
-        // Main summary table
+        // Main summary table (most important - overall status)
         summaryMarkdown += this.generateSummaryTable(metrics, summary);
-        // Test execution details
-        summaryMarkdown += `\n## 📈 Test Execution Details\n\n`;
+        // Test execution details (what are the results)
+        summaryMarkdown += `### 📈 Test Execution Details\n`;
         summaryMarkdown += this.generateExecutionDetails(metrics);
-        // Combined Performance & Slowest Tests section
+        // Failure categories FIRST (most urgent - what broke)
+        if (metrics.failureCategories.length > 0) {
+            summaryMarkdown += `### ❌ Failure Analysis\n`;
+            summaryMarkdown += this.generateFailureCategoriesTable(metrics.failureCategories);
+            summaryMarkdown += '\n';
+        }
+        // Flaky tests SECOND (unreliable tests need attention)
+        if (metrics.flakyTests.length > 0) {
+            summaryMarkdown += `### 🐛 Flaky Tests Detected\n`;
+            summaryMarkdown += this.generateFlakyTestsTable(metrics.flakyTests);
+            summaryMarkdown += '\n';
+        }
+        // Performance & Slowest Tests THIRD (less urgent than failures)
         if (metrics.slowTests.length > 0 || insights.length > 0) {
-            summaryMarkdown += `\n## 🐌 Performance Analysis\n\n`;
+            summaryMarkdown += `### � Performance Analysis\n`;
             // Performance insights
             if (insights.length > 0) {
                 insights.forEach(insight => {
                     summaryMarkdown += `- ${insight}\n`;
                 });
-                summaryMarkdown += '\n';
             }
             // Slowest tests table
             if (metrics.slowTests.length > 0) {
+                summaryMarkdown += '\n';
                 summaryMarkdown += this.generateSlowTestsTable(metrics.slowTests);
             }
+            summaryMarkdown += '\n';
         }
-        // Flaky tests section
-        if (metrics.flakyTests.length > 0) {
-            summaryMarkdown += `\n## 🐛 Flaky Tests Detected\n\n`;
-            summaryMarkdown += this.generateFlakyTestsTable(metrics.flakyTests);
-        }
-        // Failure categories
-        if (metrics.failureCategories.length > 0) {
-            summaryMarkdown += `\n## ❌ Failure Analysis\n\n`;
-            summaryMarkdown += this.generateFailureCategoriesTable(metrics.failureCategories);
-        }
-        // Trend chart (simple ASCII)
+        // Trend chart LAST (historical data is least urgent)
         if (historicalData.length > 1) {
-            summaryMarkdown += `\n## 📊 Performance Trend (Last 7 Days)\n\n`;
+            summaryMarkdown += `### 📊 Performance Trend (Last 7 Days)\n`;
             summaryMarkdown += this.generateTrendChart(historicalData.slice(-7));
         }
         // Write to GitHub Actions job summary
@@ -52645,14 +52648,21 @@ class SummaryReporter {
         const statusEmoji = this.getStatusEmoji(metrics.passRate);
         const durationTrend = this.getTrendEmoji(summary.durationTrend.trend);
         const passRateTrend = this.getTrendEmoji(summary.passRateTrend.trend);
-        return `| Metric | Current | Previous | Change | Status |
-|--------|---------|----------|--------|--------|
-| **Tests** | ${metrics.totalTests} | ${summary.testCountTrend.previous} | ${this.formatChange(summary.testCountTrend)} | ${this.getTrendEmoji(summary.testCountTrend.trend)} |
-| **Pass Rate** | ${metrics.passRate.toFixed(1)}% | ${summary.passRateTrend.previous.toFixed(1)}% | ${this.formatChange(summary.passRateTrend)} | ${passRateTrend} |
-| **Duration** | ${metrics.totalDuration.toFixed(2)}s | ${summary.durationTrend.previous.toFixed(2)}s | ${this.formatChange(summary.durationTrend)} | ${durationTrend} |
-| **Flaky Tests** | ${metrics.flakyTests.length} | ${summary.flakyTestsTrend.previous} | ${this.formatChange(summary.flakyTestsTrend)} | ${this.getTrendEmoji(summary.flakyTestsTrend.trend)} |
+        // Format metrics with better visual presentation
+        const testsStatus = `${metrics.totalTests} tests`;
+        const passRateValue = `${metrics.passRate.toFixed(1)}%`;
+        const durationValue = `${metrics.totalDuration.toFixed(2)}s`;
+        const flakyValue = metrics.flakyTests.length;
+        return `**Overall Status:** ${statusEmoji} ${metrics.passedTests}/${metrics.totalTests} tests passed
 
-**Overall Status:** ${statusEmoji} ${metrics.passedTests}/${metrics.totalTests} tests passed\n\n`;
+| Metric | Current | Previous | Trend |
+|:-------|:-------:|:--------:|:-----:|
+| 📊 Tests | ${testsStatus} | ${summary.testCountTrend.previous} | ${this.getTrendEmoji(summary.testCountTrend.trend)} ${this.formatTrendValue(summary.testCountTrend)} |
+| ✅ Pass Rate | ${passRateValue} | ${summary.passRateTrend.previous.toFixed(1)}% | ${passRateTrend} ${this.formatTrendValue(summary.passRateTrend)} |
+| ⏱️ Duration | ${durationValue} | ${summary.durationTrend.previous.toFixed(2)}s | ${durationTrend} ${this.formatTrendValue(summary.durationTrend)} |
+| 🐛 Flaky | ${flakyValue} | ${summary.flakyTestsTrend.previous} | ${this.getTrendEmoji(summary.flakyTestsTrend.trend)} ${this.formatTrendValue(summary.flakyTestsTrend)} |
+
+\n`;
     }
     generateExecutionDetails(metrics) {
         const passed = metrics.passedTests;
@@ -52666,12 +52676,8 @@ class SummaryReporter {
         const avgDur = metrics.averageDuration;
         const displayAvgDur = avgDur >= 1 ? avgDur.toFixed(2) : (avgDur * 1000).toFixed(0);
         const avgDurUnit = avgDur >= 1 ? 's' : 'ms';
-        return `
-- 🟢 **Passed:** **${passed}** (${passedPercent}%)
-- 🔴 **Failed:** **${failed}** (${failedPercent}%)
-- 🟡 **Skipped:** **${skipped}** (${skippedPercent}%)
-
-**Average test duration:** ${displayAvgDur}${avgDurUnit}
+        return `🟢 **Passed:** **${passed}** (${passedPercent}%) | 🔴 **Failed:** **${failed}** (${failedPercent}%) | 🟡 **Skipped:** **${skipped}** (${skippedPercent}%)
+**Avg Duration:** ${displayAvgDur}${avgDurUnit}
 `;
     }
     generateFlakyTestsTable(flakyTests) {
@@ -52687,7 +52693,10 @@ class SummaryReporter {
         return table;
     }
     generateSlowTestsTable(slowTests) {
-        let table = `| Test Name | Duration | Suite |\n`;
+        // Show slowest tests with explanation
+        const totalCount = slowTests.length;
+        let table = `**Top ${totalCount} Slowest Tests** (in top 5% by duration)\n\n`;
+        table += `| Test Name | Duration | Suite |\n`;
         table += `|-----------|----------|-------|\n`;
         slowTests.slice(0, 10).forEach(test => {
             // Duration is stored in seconds from XML, display appropriately
@@ -52751,6 +52760,10 @@ class SummaryReporter {
     formatChange(trend) {
         const sign = trend.change > 0 ? '+' : '';
         return `${sign}${trend.change.toFixed(1)} (${sign}${trend.changePercent.toFixed(1)}%)`;
+    }
+    formatTrendValue(trend) {
+        const sign = trend.changePercent > 0 ? '+' : '';
+        return `${sign}${trend.changePercent.toFixed(1)}%`;
     }
 }
 exports.SummaryReporter = SummaryReporter;
