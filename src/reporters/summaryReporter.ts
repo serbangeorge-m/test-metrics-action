@@ -17,7 +17,7 @@ export class SummaryReporter {
     const summary = this.trendAnalyzer.getTrendSummary(metrics, historicalData);
     const insights = this.trendAnalyzer.getPerformanceInsights(metrics, historicalData);
     
-    let summaryMarkdown = `# 🧪 Test Metrics Report (${framework})\n\n`;
+    let summaryMarkdown = `### 🧪 Test Metrics Report (${framework})\n\n`;
     
     // Main summary table (most important - overall status)
     summaryMarkdown += this.generateSummaryTable(metrics, summary);
@@ -79,7 +79,7 @@ export class SummaryReporter {
     // Format metrics with better visual presentation
     const testsStatus = `${metrics.totalTests} tests`;
     const passRateValue = `${metrics.passRate.toFixed(1)}%`;
-    const durationValue = `${(metrics.totalDuration / 1000).toFixed(2)}s`;
+    const durationValue = `${metrics.totalDuration.toFixed(2)}s`;
     const avgDurValue = metrics.averageDuration >= 1 ? 
       `${metrics.averageDuration.toFixed(2)}s` : 
       `${(metrics.averageDuration * 1000).toFixed(0)}ms`;
@@ -91,7 +91,7 @@ export class SummaryReporter {
 |:-------|:-------:|:--------:|:-----:|
 | 📊 Tests | ${testsStatus} | ${summary.testCountTrend.previous} | ${this.getTrendEmoji(summary.testCountTrend.trend)} ${this.formatTrendValue(summary.testCountTrend)} |
 | ✅ Pass Rate | ${passRateValue} | ${summary.passRateTrend.previous.toFixed(1)}% | ${passRateTrend} ${this.formatTrendValue(summary.passRateTrend)} |
-| ⏱️ Duration | ${durationValue} | ${(summary.durationTrend.previous / 1000).toFixed(2)}s | ${durationTrend} ${this.formatTrendValue(summary.durationTrend)} |
+| ⏱️ Duration | ${durationValue} | ${summary.durationTrend.previous.toFixed(2)}s | ${durationTrend} ${this.formatTrendValue(summary.durationTrend)} |
 | ⏱️ Avg Duration | ${avgDurValue} | — | — |
 | 🐛 Flaky | ${flakyValue} | ${summary.flakyTestsTrend.previous} | ${this.getTrendEmoji(summary.flakyTestsTrend.trend)} ${this.formatTrendValue(summary.flakyTestsTrend)} |
 

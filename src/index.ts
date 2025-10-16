@@ -80,9 +80,21 @@ async function run(): Promise<void> {
     const metricsCalculator = new MetricsCalculator();
     const metrics = metricsCalculator.calculateMetrics(combinedData.suites);
 
-    // Load historical data and save current run
+    // Load historical data from cache and artifacts
     const trendCache = new TrendCache(cacheKeyPrefix, retentionDays);
-    const historicalData = await trendCache.loadTrendData();
+    const cacheData = await trendCache.loadTrendData();
+    
+    // Load from GitHub artifacts for longer history (90 days)
+    const gitHubTrendManager = new GitHubTrendManager(testFramework === 'auto' ? 'junit' : testFramework, 90);
+    const artifactData = await gitHubTrendManager.loadTrendHistory(90);
+    
+    // Merge and deduplicate by runId (prefer cache data if duplicate)
+    const mergedHistoricalData = [
+      ...artifactData,
+      ...cacheData
+    ].filter((data, index, arr) => 
+      index === arr.findIndex(d => d.runId === data.runId)
+    ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     
     const currentTrendData: TrendData = {
       timestamp: new Date().toISOString(),
@@ -92,9 +104,6 @@ async function run(): Promise<void> {
     };
     
     await trendCache.saveTrendData(currentTrendData);
-
-    // Also save to GitHub artifacts for longer-term history (90 days)
-    const gitHubTrendManager = new GitHubTrendManager(testFramework === 'auto' ? 'junit' : testFramework, 90);
     await gitHubTrendManager.saveTrendArtifact(currentTrendData);
 
     // Set outputs
@@ -103,13 +112,13 @@ async function run(): Promise<void> {
     core.setOutput('failed_tests', metrics.failedTests.toString());
     core.setOutput('skipped_tests', metrics.skippedTests.toString());
     core.setOutput('pass_rate', metrics.passRate.toFixed(2));
-    core.setOutput('total_duration', (metrics.totalDuration / 1000).toFixed(2));
+    core.setOutput('total_duration', metrics.totalDuration.toFixed(2));
     core.setOutput('flaky_tests_count', metrics.flakyTests.length.toString());
 
     // Generate job summary
     if (detailedSummary) {
       const summaryReporter = new SummaryReporter();
-      await summaryReporter.generateJobSummary(metrics, historicalData, combinedData.framework.type);
+      await summaryReporter.generateJobSummary(metrics, mergedHistoricalData, combinedData.framework.type);
     }
 
     // Handle test failures
@@ -210,7 +219,7 @@ async function annotatePullRequest(metrics: any, annotateOnly: boolean): Promise
   
 **Status:** ${metrics.passRate >= 95 ? '🟢 All tests passed' : metrics.passRate >= 80 ? '🟡 Some tests failed' : '🔴 Tests failing'}
 **Pass Rate:** ${metrics.passRate.toFixed(1)}% (${metrics.passedTests}/${metrics.totalTests})
-**Duration:** ${(metrics.totalDuration / 1000).toFixed(1)}s
+**Duration:** ${metrics.totalDuration.toFixed(1)}s
 ${metrics.flakyTests.length > 0 ? `**Flaky Tests:** ${metrics.flakyTests.length}` : ''}
 
 ${metrics.failedTests > 0 ? `⚠️ ${metrics.failedTests} test(s) failed` : '✅ All tests passed!'}`;
