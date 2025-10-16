@@ -52609,25 +52609,29 @@ class SummaryReporter {
         let summaryMarkdown = `# 🧪 Test Metrics Report (${framework})\n\n`;
         // Main summary table
         summaryMarkdown += this.generateSummaryTable(metrics, summary);
-        // Performance insights
-        if (insights.length > 0) {
-            summaryMarkdown += `\n## 📊 Performance Insights\n\n`;
-            insights.forEach(insight => {
-                summaryMarkdown += `- ${insight}\n`;
-            });
-        }
         // Test execution details
         summaryMarkdown += `\n## 📈 Test Execution Details\n\n`;
         summaryMarkdown += this.generateExecutionDetails(metrics);
+        // Combined Performance & Slowest Tests section
+        if (metrics.slowTests.length > 0 || insights.length > 0) {
+            summaryMarkdown += `\n## 🐌 Performance Analysis\n\n`;
+            // Performance insights
+            if (insights.length > 0) {
+                insights.forEach(insight => {
+                    summaryMarkdown += `- ${insight}\n`;
+                });
+                summaryMarkdown += '\n';
+            }
+            // Slowest tests table
+            if (metrics.slowTests.length > 0) {
+                summaryMarkdown += `**Slowest Tests (Top 5%):**\n\n`;
+                summaryMarkdown += this.generateSlowTestsTable(metrics.slowTests);
+            }
+        }
         // Flaky tests section
         if (metrics.flakyTests.length > 0) {
-            summaryMarkdown += `\n## �� Flaky Tests Detected\n\n`;
+            summaryMarkdown += `\n## 🐛 Flaky Tests Detected\n\n`;
             summaryMarkdown += this.generateFlakyTestsTable(metrics.flakyTests);
-        }
-        // Slow tests section
-        if (metrics.slowTests.length > 0) {
-            summaryMarkdown += `\n## 🐌 Slowest Tests (Top 5%)\n\n`;
-            summaryMarkdown += this.generateSlowTestsTable(metrics.slowTests);
         }
         // Failure categories
         if (metrics.failureCategories.length > 0) {
