@@ -40,7 +40,6 @@ export class SummaryReporter {
       
       // Slowest tests table
       if (metrics.slowTests.length > 0) {
-        summaryMarkdown += `**Slowest Tests (Top 5%):**\n\n`;
         summaryMarkdown += this.generateSlowTestsTable(metrics.slowTests);
       }
     }
@@ -100,7 +99,6 @@ export class SummaryReporter {
     const avgDurUnit = avgDur >= 1 ? 's' : 'ms';
     
     return `
-### Test Results Breakdown
 - **Passed:** <span style="color: #22c55e;">**${passed}** (${passedPercent}%)</span>
 - **Failed:** <span style="color: #ef4444;">**${failed}** (${failedPercent}%)</span>
 - **Skipped:** <span style="color: #f59e0b;">**${skipped}** (${skippedPercent}%)</span>

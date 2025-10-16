@@ -136,13 +136,7 @@ export class TrendAnalyzer {
       insights.push(`🎯 Flaky tests decreased by ${Math.abs(summary.flakyTestsTrend.change)}`);
     }
 
-    // Slow tests insights
-    if (currentMetrics.slowTests.length > 0) {
-      const duration = currentMetrics.slowTests[0].duration;
-      const displayDuration = duration >= 1 ? duration.toFixed(2) : (duration * 1000).toFixed(0);
-      const unit = duration >= 1 ? 's' : 'ms';
-      insights.push(`🐌 ${currentMetrics.slowTests.length} tests are in the slowest 5% (${displayDuration}${unit}+)`);
-    }
+    // Note: Slow tests insights are not included here as they're shown in the Slowest Tests table
 
     return insights;
   }

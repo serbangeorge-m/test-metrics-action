@@ -51957,13 +51957,7 @@ class TrendAnalyzer {
         else if (summary.flakyTestsTrend.trend === 'improving') {
             insights.push(`🎯 Flaky tests decreased by ${Math.abs(summary.flakyTestsTrend.change)}`);
         }
-        // Slow tests insights
-        if (currentMetrics.slowTests.length > 0) {
-            const duration = currentMetrics.slowTests[0].duration;
-            const displayDuration = duration >= 1 ? duration.toFixed(2) : (duration * 1000).toFixed(0);
-            const unit = duration >= 1 ? 's' : 'ms';
-            insights.push(`🐌 ${currentMetrics.slowTests.length} tests are in the slowest 5% (${displayDuration}${unit}+)`);
-        }
+        // Note: Slow tests insights are not included here as they're shown in the Slowest Tests table
         return insights;
     }
 }
@@ -52624,7 +52618,6 @@ class SummaryReporter {
             }
             // Slowest tests table
             if (metrics.slowTests.length > 0) {
-                summaryMarkdown += `**Slowest Tests (Top 5%):**\n\n`;
                 summaryMarkdown += this.generateSlowTestsTable(metrics.slowTests);
             }
         }
@@ -52674,7 +52667,6 @@ class SummaryReporter {
         const displayAvgDur = avgDur >= 1 ? avgDur.toFixed(2) : (avgDur * 1000).toFixed(0);
         const avgDurUnit = avgDur >= 1 ? 's' : 'ms';
         return `
-### Test Results Breakdown
 - **Passed:** <span style="color: #22c55e;">**${passed}** (${passedPercent}%)</span>
 - **Failed:** <span style="color: #ef4444;">**${failed}** (${failedPercent}%)</span>
 - **Skipped:** <span style="color: #f59e0b;">**${skipped}** (${skippedPercent}%)</span>
