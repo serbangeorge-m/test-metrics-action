@@ -17,24 +17,17 @@ export class SummaryReporter {
     const summary = this.trendAnalyzer.getTrendSummary(metrics, historicalData);
     const insights = this.trendAnalyzer.getPerformanceInsights(metrics, historicalData);
     
-    let summaryMarkdown = `### 🧪 Test Metrics Report (${framework})\n\n`;
+    let summaryMarkdown = `## 🧪 Test Metrics Report (${framework})\n\n`;
     
     // Main summary table (most important - overall status)
     summaryMarkdown += this.generateSummaryTable(metrics, summary);
     
-    // Test execution details & Performance insights side by side
-    summaryMarkdown += `<table><tr><td width="50%">
-
-### 📈 Test Execution Details
-`;
+    // Test execution details
+    summaryMarkdown += `## 📈 Test Execution Details\n`;
     summaryMarkdown += this.generateExecutionDetails(metrics);
     
-    summaryMarkdown += `</td><td width="50%">
-
-### 📊 Performance Insights
-`;
-    
     // Performance insights
+    summaryMarkdown += `## 📊 Performance Insights\n`;
     if (insights.length > 0) {
       insights.forEach(insight => {
         summaryMarkdown += `- ${insight}\n`;
@@ -42,33 +35,32 @@ export class SummaryReporter {
     } else {
       summaryMarkdown += `- No significant changes detected\n`;
     }
-    
-    summaryMarkdown += `</td></tr></table>\n`;
+    summaryMarkdown += '\n';
     
     // Failure categories FIRST (most urgent - what broke)
     if (metrics.failureCategories.length > 0) {
-      summaryMarkdown += `### ❌ Failure Analysis\n`;
+      summaryMarkdown += `## ❌ Failure Analysis\n`;
       summaryMarkdown += this.generateFailureCategoriesTable(metrics.failureCategories);
       summaryMarkdown += '\n';
     }
     
     // Flaky tests SECOND (unreliable tests need attention)
     if (metrics.flakyTests.length > 0) {
-      summaryMarkdown += `### 🐛 Flaky Tests Detected\n`;
+      summaryMarkdown += `## 🐛 Flaky Tests Detected\n`;
       summaryMarkdown += this.generateFlakyTestsTable(metrics.flakyTests);
       summaryMarkdown += '\n';
     }
     
     // Performance & Slowest Tests THIRD (less urgent than failures)
     if (metrics.slowTests.length > 0) {
-      summaryMarkdown += `### 🐌 Slowest Tests\n`;
+      summaryMarkdown += `## 🐌 Slowest Tests (Top ${metrics.slowTests.length})\n`;
       summaryMarkdown += this.generateSlowTestsTable(metrics.slowTests);
       summaryMarkdown += '\n';
     }
     
     // Trend chart LAST (historical data is least urgent)
     if (historicalData.length > 1) {
-      summaryMarkdown += `### 📊 Performance Trend (Last 7 Days)\n`;
+      summaryMarkdown += `## 📊 Performance Trend (Last 7 Days)\n`;
       summaryMarkdown += this.generateTrendChart(historicalData.slice(-7));
     }
     
@@ -155,10 +147,7 @@ export class SummaryReporter {
   }
 
   private generateSlowTestsTable(slowTests: any[]): string {
-    // Show slowest tests with explanation
-    const totalCount = slowTests.length;
-    let table = `**Top ${totalCount} Slowest Tests** (in top 5% by duration)\n\n`;
-    table += `| Test Name | Duration | Suite |\n`;
+    let table = `| Test Name | Duration | Suite |\n`;
     table += `|-----------|----------|-------|\n`;
     
     slowTests.slice(0, 10).forEach(test => {
