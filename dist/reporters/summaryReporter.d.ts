@@ -9,10 +9,8 @@ export declare class SummaryReporter {
     private generateSlowTestsTable;
     private generateFailureCategoriesTable;
     private generateTrendChart;
-    private generateProgressBar;
     private getStatusEmoji;
     private getTrendEmoji;
-    private formatChange;
     private formatTrendValue;
 }
 //# sourceMappingURL=summaryReporter.d.ts.map

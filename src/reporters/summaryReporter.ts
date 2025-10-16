@@ -186,12 +186,6 @@ export class SummaryReporter {
     return chart;
   }
 
-  private generateProgressBar(value: number, total: number, emoji: string): string {
-    const percentage = total > 0 ? (value / total) * 100 : 0;
-    const barLength = Math.round(percentage / 5); // 20 chars max
-    return emoji.repeat(barLength) + '░'.repeat(Math.max(0, 20 - barLength));
-  }
-
   private getStatusEmoji(passRate: number): string {
     if (passRate >= 95) return '🟢';
     if (passRate >= 80) return '🟡';
@@ -204,11 +198,6 @@ export class SummaryReporter {
       case 'declining': return '📉';
       default: return '➡️';
     }
-  }
-
-  private formatChange(trend: any): string {
-    const sign = trend.change > 0 ? '+' : '';
-    return `${sign}${trend.change.toFixed(1)} (${sign}${trend.changePercent.toFixed(1)}%)`;
   }
 
   private formatTrendValue(trend: any): string {
