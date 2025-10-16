@@ -151,8 +151,17 @@ export class JUnitParser {
   }
 
   private determineTestStatus(testcase: any): 'passed' | 'failed' | 'skipped' {
-    if (testcase.skipped || testcase.$.skipped) return 'skipped';
-    if (testcase.failure || testcase.error) return 'failed';
+    // Check for skipped element (not the merged attribute)
+    if (testcase.skipped && typeof testcase.skipped === 'object') {
+      return 'skipped';
+    }
+    
+    // Check for failure or error elements
+    if (testcase.failure || testcase.error) {
+      return 'failed';
+    }
+    
+    // Default to passed
     return 'passed';
   }
 

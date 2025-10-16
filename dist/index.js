@@ -52288,10 +52288,15 @@ class JUnitParser {
         }
     }
     determineTestStatus(testcase) {
-        if (testcase.skipped || testcase.$.skipped)
+        // Check for skipped element (not the merged attribute)
+        if (testcase.skipped && typeof testcase.skipped === 'object') {
             return 'skipped';
-        if (testcase.failure || testcase.error)
+        }
+        // Check for failure or error elements
+        if (testcase.failure || testcase.error) {
             return 'failed';
+        }
+        // Default to passed
         return 'passed';
     }
     extractErrorMessage(testcase) {
