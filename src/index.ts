@@ -88,19 +88,22 @@ async function run(): Promise<void> {
     const gitHubTrendManager = new GitHubTrendManager(testFramework === 'auto' ? 'junit' : testFramework, 90);
     const artifactData = await gitHubTrendManager.loadTrendHistory(90);
     
-    // Merge and deduplicate by runId (prefer cache data if duplicate)
+    // Merge and deduplicate by runId + matrixKey (prefer cache data if duplicate)
     const mergedHistoricalData = [
       ...artifactData,
       ...cacheData
     ].filter((data, index, arr) => 
-      index === arr.findIndex(d => d.runId === data.runId)
+      index === arr.findIndex(d => 
+        d.runId === data.runId && d.matrixKey === data.matrixKey
+      )
     ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     
     const currentTrendData: TrendData = {
       timestamp: new Date().toISOString(),
       commitSha: github.context.sha,
       metrics,
-      runId: github.context.runId.toString()
+      runId: github.context.runId.toString(),
+      matrixKey: getMatrixKey() // Capture matrix context if present
     };
     
     await trendCache.saveTrendData(currentTrendData);
@@ -234,6 +237,37 @@ ${metrics.failedTests > 0 ? `⚠️ ${metrics.failedTests} test(s) failed` : '�
   } catch (error) {
     core.warning(`Failed to create PR comment: ${error}`);
   }
+}
+
+function getMatrixKey(): string | undefined {
+  // Capture matrix context from GitHub Actions environment
+  // Matrix keys are available as environment variables like:
+  // MATRIX_NODE_VERSION, MATRIX_OS, etc.
+  const matrixValues: string[] = [];
+  
+  // Common matrix variable names
+  const matrixVars = [
+    'MATRIX_NODE_VERSION',
+    'MATRIX_OS',
+    'MATRIX_PYTHON_VERSION',
+    'MATRIX_JAVA_VERSION',
+    'MATRIX_RUBY_VERSION'
+  ];
+  
+  for (const varName of matrixVars) {
+    const value = process.env[varName];
+    if (value) {
+      matrixValues.push(`${varName.replace('MATRIX_', '').toLowerCase()}:${value}`);
+    }
+  }
+  
+  // Also check for generic matrix context via GitHub context
+  // In matrix builds, github.context.job includes matrix info
+  if (github.context.job && github.context.job.includes('matrix')) {
+    matrixValues.push(github.context.job);
+  }
+  
+  return matrixValues.length > 0 ? matrixValues.join(',') : undefined;
 }
 
 // Run the action

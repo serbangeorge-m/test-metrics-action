@@ -46,6 +46,7 @@ export interface TrendData {
     commitSha: string;
     metrics: TestMetrics;
     runId: string;
+    matrixKey?: string;
 }
 export interface PerformanceTrend {
     current: number;

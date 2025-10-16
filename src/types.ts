@@ -51,6 +51,7 @@ export interface TrendData {
   commitSha: string;
   metrics: TestMetrics;
   runId: string;
+  matrixKey?: string; // e.g., "node:18,os:ubuntu-latest"
 }
 
 export interface PerformanceTrend {
