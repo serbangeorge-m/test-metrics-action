@@ -52652,7 +52652,7 @@ class SummaryReporter {
 |--------|---------|----------|--------|--------|
 | **Tests** | ${metrics.totalTests} | ${summary.testCountTrend.previous} | ${this.formatChange(summary.testCountTrend)} | ${this.getTrendEmoji(summary.testCountTrend.trend)} |
 | **Pass Rate** | ${metrics.passRate.toFixed(1)}% | ${summary.passRateTrend.previous.toFixed(1)}% | ${this.formatChange(summary.passRateTrend)} | ${passRateTrend} |
-| **Duration** | ${(metrics.totalDuration / 1000).toFixed(1)}s | ${(summary.durationTrend.previous / 1000).toFixed(1)}s | ${this.formatChange(summary.durationTrend)} | ${durationTrend} |
+| **Duration** | ${metrics.totalDuration.toFixed(2)}s | ${summary.durationTrend.previous.toFixed(2)}s | ${this.formatChange(summary.durationTrend)} | ${durationTrend} |
 | **Flaky Tests** | ${metrics.flakyTests.length} | ${summary.flakyTestsTrend.previous} | ${this.formatChange(summary.flakyTestsTrend)} | ${this.getTrendEmoji(summary.flakyTestsTrend.trend)} |
 
 **Overall Status:** ${statusEmoji} ${metrics.passedTests}/${metrics.totalTests} tests passed\n\n`;
@@ -52665,13 +52665,17 @@ class SummaryReporter {
         const passedBar = this.generateProgressBar(passed, total, '🟢');
         const failedBar = this.generateProgressBar(failed, total, '🔴');
         const skippedBar = this.generateProgressBar(skipped, total, '🟡');
+        // Format average duration (in seconds from calculator)
+        const avgDur = metrics.averageDuration;
+        const displayAvgDur = avgDur >= 1 ? avgDur.toFixed(2) : (avgDur * 1000).toFixed(0);
+        const avgDurUnit = avgDur >= 1 ? 's' : 'ms';
         return `
 ### Test Results Breakdown
 - **Passed:** ${passedBar} ${passed} (${((passed / total) * 100).toFixed(1)}%)
 - **Failed:** ${failedBar} ${failed} (${((failed / total) * 100).toFixed(1)}%)
 - **Skipped:** ${skippedBar} ${skipped} (${((skipped / total) * 100).toFixed(1)}%)
 
-**Average test duration:** ${metrics.averageDuration.toFixed(0)}ms
+**Average test duration:** ${displayAvgDur}${avgDurUnit}
 `;
     }
     generateFlakyTestsTable(flakyTests) {
