@@ -4,5 +4,6 @@ export declare class JUnitParser {
     private parseJUnitXML;
     private determineTestStatus;
     private extractErrorMessage;
+    private getAttributeValue;
 }
 //# sourceMappingURL=junitParser.d.ts.map

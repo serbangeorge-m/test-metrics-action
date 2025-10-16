@@ -52199,14 +52199,21 @@ class JUnitParser {
             for (const testsuite of testSuitesArray) {
                 if (!testsuite)
                     continue;
+                // Get attribute values - with mergeAttrs: true, attributes are merged directly
+                const testsCount = this.getAttributeValue(testsuite, 'tests');
+                const failuresCount = this.getAttributeValue(testsuite, 'failures');
+                const errorsCount = this.getAttributeValue(testsuite, 'errors');
+                const skippedCount = this.getAttributeValue(testsuite, 'skipped');
+                const timeValue = this.getAttributeValue(testsuite, 'time');
+                const suiteName = this.getAttributeValue(testsuite, 'name') || 'Unknown Suite';
                 const suite = {
-                    name: testsuite.name || testsuite.$.name || 'Unknown Suite',
+                    name: suiteName,
                     tests: [],
-                    totalTests: parseInt(testsuite.$.tests || testsuite.tests || '0'),
+                    totalTests: testsCount,
                     passedTests: 0,
                     failedTests: 0,
                     skippedTests: 0,
-                    duration: parseFloat(testsuite.$.time || testsuite.time || '0')
+                    duration: timeValue
                 };
                 // Parse individual test cases
                 if (testsuite.testcase) {
@@ -52214,13 +52221,16 @@ class JUnitParser {
                     for (const testcase of testcases) {
                         if (!testcase)
                             continue;
+                        const testName = this.getAttributeValue(testcase, 'name') || 'Unknown Test';
+                        const testTime = this.getAttributeValue(testcase, 'time');
+                        const classname = this.getAttributeValue(testcase, 'classname');
                         const test = {
-                            name: testcase.$.name || testcase.name || 'Unknown Test',
+                            name: testName,
                             status: this.determineTestStatus(testcase),
-                            duration: parseFloat(testcase.$.time || testcase.time || '0'),
+                            duration: testTime,
                             errorMessage: this.extractErrorMessage(testcase),
                             suite: suite.name,
-                            file: testcase.$.file || testcase.file || testcase.$.classname || testcase.classname
+                            file: classname
                         };
                         suite.tests.push(test);
                         // Update counts
@@ -52239,12 +52249,9 @@ class JUnitParser {
                 }
                 // If no testcases but we have counts, create virtual tests
                 if (suite.tests.length === 0 && suite.totalTests > 0) {
-                    suite.passedTests = suite.totalTests - (parseInt(testsuite.$.failures || testsuite.failures || '0') +
-                        parseInt(testsuite.$.errors || testsuite.errors || '0') +
-                        parseInt(testsuite.$.skipped || testsuite.skipped || '0'));
-                    suite.failedTests = parseInt(testsuite.$.failures || testsuite.failures || '0') +
-                        parseInt(testsuite.$.errors || testsuite.errors || '0');
-                    suite.skippedTests = parseInt(testsuite.$.skipped || testsuite.skipped || '0');
+                    suite.passedTests = suite.totalTests - (failuresCount + errorsCount + skippedCount);
+                    suite.failedTests = failuresCount + errorsCount;
+                    suite.skippedTests = skippedCount;
                 }
                 suites.push(suite);
             }
@@ -52277,6 +52284,43 @@ class JUnitParser {
         }
         if (testcase.error) {
             return testcase.error.$.message || testcase.error.message || testcase.error;
+        }
+        return undefined;
+    }
+    getAttributeValue(element, attributeName) {
+        // With mergeAttrs: true, attributes are merged directly into the object
+        if (element[attributeName] !== undefined) {
+            const value = element[attributeName];
+            // Handle numeric attributes
+            if (attributeName === 'tests' || attributeName === 'failures' ||
+                attributeName === 'errors' || attributeName === 'skipped') {
+                return parseInt(value, 10) || 0;
+            }
+            // Handle time/duration attributes
+            if (attributeName === 'time') {
+                return parseFloat(value) || 0;
+            }
+            return value;
+        }
+        // Fallback for attributes under $ (shouldn't happen with mergeAttrs: true)
+        if (element.$ && element.$[attributeName] !== undefined) {
+            const value = element.$[attributeName];
+            if (attributeName === 'tests' || attributeName === 'failures' ||
+                attributeName === 'errors' || attributeName === 'skipped') {
+                return parseInt(value, 10) || 0;
+            }
+            if (attributeName === 'time') {
+                return parseFloat(value) || 0;
+            }
+            return value;
+        }
+        // Return default values
+        if (attributeName === 'tests' || attributeName === 'failures' ||
+            attributeName === 'errors' || attributeName === 'skipped') {
+            return 0;
+        }
+        if (attributeName === 'time') {
+            return 0;
         }
         return undefined;
     }
