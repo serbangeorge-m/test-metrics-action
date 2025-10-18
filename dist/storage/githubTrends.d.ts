@@ -7,7 +7,7 @@ export declare class GitHubTrendManager {
     private artifactClient;
     private artifactName;
     private retentionDays;
-    constructor(framework?: string, retentionDays?: number);
+    constructor(framework?: string, retentionDays?: number, artifactSuffix?: string);
     /**
      * Save current metrics as GitHub artifact for long-term trend tracking
      */

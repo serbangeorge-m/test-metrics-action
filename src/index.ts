@@ -25,6 +25,7 @@ async function run(): Promise<void> {
     const requireTests = core.getBooleanInput('require_tests');
     const retentionDays = parseInt(core.getInput('retention_days') || '30');
     const cacheKeyPrefix = core.getInput('cache_key_prefix') || 'test-metrics';
+    const artifactSuffix = core.getInput('artifact_suffix');
 
     core.info(`Looking for test reports matching: ${reportPaths}`);
 
@@ -91,7 +92,11 @@ async function run(): Promise<void> {
     const cacheData = await trendCache.loadTrendData();
     
     // Load from GitHub artifacts for longer history (90 days)
-    const gitHubTrendManager = new GitHubTrendManager(testFramework === 'auto' ? 'junit' : testFramework, 90);
+    const gitHubTrendManager = new GitHubTrendManager(
+      testFramework === 'auto' ? 'junit' : testFramework,
+      90,
+      artifactSuffix
+    );
     const artifactData = await gitHubTrendManager.loadTrendHistory(90);
     
     // Merge and deduplicate by runId + matrixKey (prefer cache data if duplicate)

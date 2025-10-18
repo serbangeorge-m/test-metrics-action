@@ -38,6 +38,10 @@ inputs:
     description: 'Prefix for cache key to separate different test suites'
     required: false
     default: 'test-metrics'
+  artifact_suffix:
+    description: 'Suffix for trend artifact name to ensure uniqueness in matrix jobs'
+    required: false
+    default: ''
 outputs:
   total_tests:
     description: 'Total number of tests'

@@ -13,9 +13,13 @@ export class GitHubTrendManager {
   private artifactName: string;
   private retentionDays: number;
 
-  constructor(framework: string = 'junit', retentionDays: number = 90) {
+  constructor(
+    framework: string = 'junit',
+    retentionDays: number = 90,
+    artifactSuffix: string = ''
+  ) {
     this.artifactClient = client;
-    this.artifactName = `test-metrics-trends-${framework}`;
+    this.artifactName = `test-metrics-trends-${framework}${artifactSuffix ? `-${artifactSuffix}` : ''}`;
     this.retentionDays = retentionDays;
   }
 
@@ -61,7 +65,7 @@ export class GitHubTrendManager {
       const { artifacts } = await this.artifactClient.listArtifacts();
       
       const trendArtifacts = artifacts.filter((a: any) => 
-        a.name === this.artifactName && !a.isExpired
+        a.name.startsWith('test-metrics-trends-') && !a.isExpired
       );
       
       if (trendArtifacts.length === 0) {
@@ -121,7 +125,9 @@ export class GitHubTrendManager {
     flakyTrend: string;
     performanceTrend: string;
   } {
-    if (trends.length === 0) {
+    const validTrends = trends.filter(t => t && t.metrics);
+
+    if (validTrends.length === 0) {
       return {
         averageDuration: 0,
         averagePassRate: 0,
@@ -131,12 +137,12 @@ export class GitHubTrendManager {
     }
 
     // Calculate averages
-    const avgDuration = trends.reduce((sum, t) => sum + t.metrics.totalDuration, 0) / trends.length;
-    const avgPassRate = trends.reduce((sum, t) => sum + t.metrics.passRate, 0) / trends.length;
+    const avgDuration = validTrends.reduce((sum, t) => sum + t.metrics.totalDuration, 0) / validTrends.length;
+    const avgPassRate = validTrends.reduce((sum, t) => sum + t.metrics.passRate, 0) / validTrends.length;
     
     // Determine trends
-    const oldestTrend = trends[0];
-    const newestTrend = trends[trends.length - 1];
+    const oldestTrend = validTrends[0];
+    const newestTrend = validTrends[validTrends.length - 1];
     
     const passRateDiff = newestTrend.metrics.passRate - oldestTrend.metrics.passRate;
     const flakyTrend = passRateDiff > 5 ? 'improving' : 
