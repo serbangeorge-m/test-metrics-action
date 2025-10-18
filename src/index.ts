@@ -127,7 +127,7 @@ async function run(): Promise<void> {
     // Generate job summary
     if (detailedSummary) {
       const summaryReporter = new SummaryReporter();
-      await summaryReporter.generateJobSummary(metrics, mergedHistoricalData, combinedData.framework.type);
+      await summaryReporter.generateJobSummary(metrics, mergedHistoricalData, combinedData.framework.type, currentTrendData);
     }
 
     // Handle test failures

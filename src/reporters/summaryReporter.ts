@@ -12,10 +12,11 @@ export class SummaryReporter {
   async generateJobSummary(
     metrics: TestMetrics,
     historicalData: TrendData[],
-    framework: string
+    framework: string,
+    currentTrendData: TrendData
   ): Promise<void> {
-    const summary = this.trendAnalyzer.getTrendSummary(metrics, historicalData);
-    const insights = this.trendAnalyzer.getPerformanceInsights(metrics, historicalData);
+    const summary = this.trendAnalyzer.getTrendSummary(metrics, historicalData, currentTrendData.matrixKey);
+    const insights = this.trendAnalyzer.getPerformanceInsights(metrics, historicalData, currentTrendData.matrixKey);
     
     let summaryMarkdown = `## 🧪 Test Metrics Report (${framework})\n\n`;
     

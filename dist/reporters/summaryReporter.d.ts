@@ -2,7 +2,7 @@ import { TestMetrics, TrendData } from '../types';
 export declare class SummaryReporter {
     private trendAnalyzer;
     constructor();
-    generateJobSummary(metrics: TestMetrics, historicalData: TrendData[], framework: string): Promise<void>;
+    generateJobSummary(metrics: TestMetrics, historicalData: TrendData[], framework: string, currentTrendData: TrendData): Promise<void>;
     private generateSummaryTable;
     private generateExecutionDetails;
     private generateFlakyTestsTable;

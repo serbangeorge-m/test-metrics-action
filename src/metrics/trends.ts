@@ -40,15 +40,16 @@ export class TrendAnalyzer {
     };
   }
 
-  getTrendSummary(currentMetrics: TestMetrics, historicalData: TrendData[]): {
+  getTrendSummary(currentMetrics: TestMetrics, historicalData: TrendData[], matrixKey?: string): {
     durationTrend: PerformanceTrend;
     passRateTrend: PerformanceTrend;
     testCountTrend: PerformanceTrend;
     flakyTestsTrend: PerformanceTrend;
   } {
-    const latest = historicalData.length > 0 ? historicalData[historicalData.length - 1] : null;
+    const relevantHistoricalData = historicalData.filter(d => d.matrixKey === matrixKey);
+    const latest = relevantHistoricalData.length > 0 ? relevantHistoricalData[relevantHistoricalData.length - 1] : null;
     
-    const durationTrend = this.analyzeTrends(currentMetrics, historicalData);
+    const durationTrend = this.analyzeTrends(currentMetrics, relevantHistoricalData);
     
     const passRateTrend: PerformanceTrend = latest ? {
       current: currentMetrics.passRate,
@@ -111,9 +112,9 @@ export class TrendAnalyzer {
     return 'stable';
   }
 
-  getPerformanceInsights(currentMetrics: TestMetrics, historicalData: TrendData[]): string[] {
+  getPerformanceInsights(currentMetrics: TestMetrics, historicalData: TrendData[], matrixKey?: string): string[] {
     const insights: string[] = [];
-    const summary = this.getTrendSummary(currentMetrics, historicalData);
+    const summary = this.getTrendSummary(currentMetrics, historicalData, matrixKey);
 
     // Duration insights
     if (summary.durationTrend.trend === 'declining') {
