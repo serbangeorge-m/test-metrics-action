@@ -1,0 +1,221 @@
+name: 🚀 Comprehensive Dashboard Demo
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      output_format:
+        description: 'Choose output format'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+        - both
+        - html
+        - markdown
+
+jobs:
+  # Jest Tests - Both Formats
+  jest-comparison:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: "🎨 Jest HTML Dashboard"
+            html_output: true
+            suffix: "jest-html"
+            icon: "🎨"
+          - name: "📝 Jest Markdown Report"
+            html_output: false
+            suffix: "jest-markdown"
+            icon: "📝"
+            condition: ${{ github.event.inputs.output_format != 'html' }}
+            
+    name: ${{ matrix.icon }} Jest - ${{ matrix.html_output && 'HTML' || 'Markdown' }}
+    if: matrix.condition != 'false'
+    
+    steps:
+      - name: 📁 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install Test Dependencies
+        run: |
+          cd test-output
+          npm install
+
+      - name: 🧪 Run Jest Tests
+        run: |
+          cd test-output
+          npm test
+
+      - name: ${{ matrix.icon }} Generate Test Metrics
+        uses: ./
+        if: always()
+        with:
+          report_paths: 'test-output/jest-results.json'
+          test_framework: 'jest'
+          html_output: ${{ matrix.html_output }}
+          detailed_summary: true
+          fail_on_failure: false
+          cache_key_prefix: 'comprehensive-${{ matrix.suffix }}'
+          artifact_suffix: '${{ matrix.suffix }}'
+
+  # JUnit XML - Both Formats  
+  junit-comparison:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: "🎨 JUnit HTML Dashboard"
+            html_output: true
+            suffix: "junit-html"
+            icon: "🎨"
+          - name: "📝 JUnit Markdown Report"
+            html_output: false
+            suffix: "junit-markdown"
+            icon: "📝"
+            condition: ${{ github.event.inputs.output_format != 'html' }}
+            
+    name: ${{ matrix.icon }} JUnit - ${{ matrix.html_output && 'HTML' || 'Markdown' }}
+    if: matrix.condition != 'false'
+    
+    steps:
+      - name: 📁 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 📄 Display Sample JUnit XML
+        run: |
+          echo "📋 Using sample JUnit XML file:"
+          echo "File: examples/junit-sample.xml"
+          echo "Contents:"
+          cat examples/junit-sample.xml
+
+      - name: ${{ matrix.icon }} Generate JUnit Metrics
+        uses: ./
+        if: always()
+        with:
+          report_paths: 'examples/junit-sample.xml'
+          test_framework: 'junit'
+          html_output: ${{ matrix.html_output }}
+          detailed_summary: true
+          fail_on_failure: false
+          cache_key_prefix: 'comprehensive-${{ matrix.suffix }}'
+          artifact_suffix: '${{ matrix.suffix }}'
+
+  # Playwright Tests - Both Formats
+  playwright-comparison:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: "🎨 Playwright HTML Dashboard"
+            html_output: true
+            suffix: "playwright-html"
+            icon: "🎨"
+          - name: "📝 Playwright Markdown Report"
+            html_output: false
+            suffix: "playwright-markdown"
+            icon: "📝"
+            condition: ${{ github.event.inputs.output_format != 'html' }}
+            
+    name: ${{ matrix.icon }} Playwright - ${{ matrix.html_output && 'HTML' || 'Markdown' }}
+    if: matrix.condition != 'false'
+    
+    steps:
+      - name: 📁 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: 🧪 Run Playwright Tests
+        run: npx playwright test --reporter=json
+        if: always()
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-results.json
+
+      - name: 📁 List Generated Files
+        run: |
+          echo "📋 Generated test files:"
+          ls -la *.json || echo "No JSON files found in root"
+          echo ""
+        if: always()
+
+      - name: ${{ matrix.icon }} Generate Playwright Metrics
+        uses: ./
+        if: always()
+        with:
+          report_paths: 'playwright-results.json'
+          test_framework: 'playwright'
+          html_output: ${{ matrix.html_output }}
+          detailed_summary: true
+          fail_on_failure: false
+          cache_key_prefix: 'comprehensive-${{ matrix.suffix }}'
+          artifact_suffix: '${{ matrix.suffix }}'
+
+  # Summary Job
+  demo-results:
+    runs-on: ubuntu-latest
+    needs: [jest-comparison, junit-comparison, playwright-comparison]
+    if: always()
+    name: 📊 Demo Results Summary
+    
+    steps:
+      - name: 📊 Display Comprehensive Demo Results
+        run: |
+          echo "🎉 Comprehensive Dashboard Demo Completed!"
+          echo ""
+          echo "✅ Frameworks Tested:"
+          echo "  🧪 Jest (JSON results)"
+          echo "  📄 JUnit XML (XML results)"  
+          echo "  🎭 Playwright (JSON results)"
+          echo ""
+          echo "🎨 Output Formats Demonstrated:"
+          echo "  📱 HTML Dashboard - Modern, responsive, interactive"
+          echo "  📝 Markdown Report - GitHub-native, structured"
+          echo ""
+          echo "🔄 Both formats show IDENTICAL information:"
+          echo "  • Test Execution Details with pass/fail ratios"
+          echo "  • Comprehensive metrics table (Current/Previous/Trend)"
+          echo "  • Performance insights and recommendations"
+          echo "  • Slowest tests identification"
+          echo "  • Flaky test detection (when applicable)"
+          echo "  • Visual trend indicators"
+          echo ""
+          echo "🎯 Key Benefits:"
+          echo "  • Consistent data across formats"
+          echo "  • Choose based on your needs (visual vs. accessible)"
+          echo "  • Same trend tracking and caching"
+          echo "  • Artifact conflict resolution"
+          echo ""
+          echo "📚 Documentation:"
+          echo "  • HTML_OUTPUT_GUIDE.md - Complete HTML guide"
+          echo "  • WORKFLOW_EXAMPLES.md - Production examples"
+          echo "  • README.md - Quick start guide"

@@ -13,5 +13,7 @@ export declare class SummaryReporter {
     private getStatusEmoji;
     private getTrendEmoji;
     private formatTrendValue;
+    private generateHtmlStructuredMarkdown;
+    private formatMarkdownTrendBadge;
 }
 //# sourceMappingURL=summaryReporter.d.ts.map

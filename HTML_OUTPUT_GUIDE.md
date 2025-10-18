@@ -58,13 +58,27 @@ The dashboard will look like this in your GitHub Actions summary:
 
 ## Comparison: Markdown vs HTML
 
-| Feature | Markdown | HTML Dashboard |
-|---------|----------|----------------|
-| Visual Appeal | Basic | ⭐⭐⭐⭐⭐ |
-| Responsive | Limited | ✅ Full |
-| Interactive | ❌ Static | ✅ Dynamic |
-| Color Coding | Emoji only | ✅ Full color |
-| Trend Visualization | Text-based | ✅ Visual badges |
+| Feature | Markdown Report | HTML Dashboard |
+|---------|-----------------|----------------|
+| **Information Structure** | ✅ **IDENTICAL** | ✅ **IDENTICAL** |
+| **Test Execution Details** | ✅ Same table format | ✅ Same table format |
+| **Metrics Comparison** | ✅ Current/Previous/Trend | ✅ Current/Previous/Trend |
+| **Performance Insights** | ✅ Same insights | ✅ Same insights |
+| **Slowest Test Detection** | ✅ Same identification | ✅ Same identification |
+| Visual Appeal | GitHub-native markdown | ⭐⭐⭐⭐⭐ Modern CSS |
+| Responsive Design | ✅ GitHub responsive | ✅ Tailwind responsive |
+| Interactive Elements | ❌ Static tables | ✅ Dynamic JavaScript |
+| Color Coding | 📈📉➡️ Emoji badges | 🎨 Full CSS colors |
+| Accessibility | ✅ Screen reader friendly | ✅ ARIA compliant |
+
+### 🎯 **NEW: Both Formats Show Identical Information!**
+
+As of the latest update, both HTML and Markdown outputs display **exactly the same data structure**:
+- Same test execution details table
+- Same metrics with Current/Previous/Trend columns  
+- Same performance insights and recommendations
+- Same slowest test identification
+- Same trend indicators (emojis vs. colors)
 
 ## Configuration Options
 
@@ -125,4 +139,28 @@ To switch from markdown to HTML output:
     html_output: true  # 🎯 Add this line
 ```
 
-That's it! Your next workflow run will show the beautiful HTML dashboard. 🚀
+## Side-by-Side Comparison
+
+Want to see both formats? Use a matrix strategy:
+
+```yaml
+strategy:
+  matrix:
+    include:
+      - name: "HTML Dashboard"
+        html_output: true
+        suffix: "html"
+      - name: "Markdown Report"  
+        html_output: false
+        suffix: "markdown"
+
+steps:
+  - uses: your-username/test-metrics-action@v1
+    with:
+      report_paths: '**/test-results/*.xml'
+      html_output: ${{ matrix.html_output }}
+      detailed_summary: true
+      artifact_suffix: ${{ matrix.suffix }}  # Prevents conflicts
+```
+
+Both outputs will show **identical information** - choose based on your preference! 🚀

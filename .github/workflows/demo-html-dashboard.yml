@@ -1,10 +1,10 @@
-name: 🎨 HTML Dashboard Demo
+name: 🎨 Dashboard Demo (HTML vs Markdown)
 
 on:
   workflow_dispatch:
     inputs:
       framework:
-        description: 'Test Framework'
+        description: 'Test Framework to Demo'
         required: true
         default: 'all'
         type: choice
@@ -14,15 +14,15 @@ on:
         - playwright
         - junit
       show_comparison:
-        description: 'Show Markdown vs HTML comparison'
+        description: 'Show side-by-side HTML vs Markdown comparison'
         required: true
         default: true
         type: boolean
 
 jobs:
-  demo-html-dashboard:
+  demo-jest-comparison:
     runs-on: ubuntu-latest
-    if: github.event.inputs.framework == 'all' || github.event.inputs.framework == 'jest' || github.event.inputs.framework == 'junit'
+    if: github.event.inputs.framework == 'all' || github.event.inputs.framework == 'jest'
     strategy:
       matrix:
         include:
@@ -31,17 +31,27 @@ jobs:
             report_paths: 'test-output/jest-results.json'
             html_output: true
             setup_cmd: 'cd test-output && npm install && npm test'
-          - name: "📝 Jest Markdown (comparison)"
+            suffix: 'jest-html'
+          - name: "📝 Jest Markdown Report"
             test_framework: 'jest'
             report_paths: 'test-output/jest-results.json'
             html_output: false
             setup_cmd: 'cd test-output && npm install && npm test'
             condition: ${{ github.event.inputs.show_comparison == 'true' }}
+            suffix: 'jest-markdown'
           - name: "🎨 JUnit HTML Dashboard"
             test_framework: 'junit'
             report_paths: 'examples/junit-sample.xml'
             html_output: true
-            setup_cmd: 'echo "Using sample JUnit file"'
+            setup_cmd: 'echo "Using sample JUnit XML for demonstration"'
+            suffix: 'junit-html'
+          - name: "📝 JUnit Markdown Report"
+            test_framework: 'junit'
+            report_paths: 'examples/junit-sample.xml'
+            html_output: false
+            setup_cmd: 'echo "Using sample JUnit XML for demonstration"'
+            condition: ${{ github.event.inputs.show_comparison == 'true' }}
+            suffix: 'junit-markdown'
     
     name: ${{ matrix.name }}
     
@@ -69,9 +79,10 @@ jobs:
         detailed_summary: true
         fail_on_failure: false
         retention_days: 7
-        cache_key_prefix: 'demo-${{ matrix.test_framework }}-${{ matrix.html_output }}'
+        cache_key_prefix: 'demo-${{ matrix.suffix }}'
+        artifact_suffix: '${{ matrix.suffix }}'
         
-  demo-playwright:
+  demo-playwright-comparison:
     runs-on: ubuntu-latest
     if: github.event.inputs.framework == 'all' || github.event.inputs.framework == 'playwright'
     strategy:
@@ -79,9 +90,11 @@ jobs:
         include:
           - name: "🎨 Playwright HTML Dashboard"
             html_output: true
-          - name: "📝 Playwright Markdown (comparison)"
+            suffix: 'playwright-html'
+          - name: "📝 Playwright Markdown Report"
             html_output: false
             condition: ${{ github.event.inputs.show_comparison == 'true' }}
+            suffix: 'playwright-markdown'
     
     name: ${{ matrix.name }}
     
@@ -117,27 +130,32 @@ jobs:
         detailed_summary: true
         fail_on_failure: false
         retention_days: 7
-        cache_key_prefix: 'demo-playwright-${{ matrix.html_output }}'
+        cache_key_prefix: 'demo-${{ matrix.suffix }}'
+        artifact_suffix: '${{ matrix.suffix }}'
         
   demo-summary:
     runs-on: ubuntu-latest
-    needs: [demo-html-dashboard, demo-playwright]
+    needs: [demo-jest-comparison, demo-playwright-comparison]
     if: always()
     name: 📊 Demo Summary
     
     steps:
     - name: 📊 Display Demo Results
       run: |
-        echo "🎉 HTML Dashboard Demo Completed!"
+        echo "🎉 Dashboard Comparison Demo Completed!"
         echo ""
-        echo "✅ The following demos were run:"
-        echo "  🎨 HTML Dashboard outputs"
-        echo "  📝 Markdown outputs (for comparison)"
+        echo "✅ What was demonstrated:"
+        echo "  🎨 HTML Dashboard - Beautiful, interactive, responsive"
+        echo "  📝 Markdown Report - Same structure, GitHub-friendly"
         echo ""
-        echo "🔍 Check the Job Summary for each job to see:"
-        echo "  • Beautiful HTML dashboard with Tailwind CSS"
-        echo "  • Interactive elements and color coding"
-        echo "  • Responsive design for mobile/desktop"
-        echo "  • Trend analysis and performance insights"
+        echo "🔄 Both formats now show IDENTICAL information:"
+        echo "  • Same test execution details table"
+        echo "  • Same metrics with Current/Previous/Trend columns"
+        echo "  • Same performance insights and slowest tests"
+        echo "  • Same trend indicators and badges"
         echo ""
-        echo "📖 For more info, see: HTML_OUTPUT_GUIDE.md"
+        echo "🎯 Choose your preferred format:"
+        echo "  • html_output: true  → Beautiful HTML dashboard"
+        echo "  • html_output: false → Structured markdown report"
+        echo ""
+        echo "📖 Complete guide: HTML_OUTPUT_GUIDE.md"

@@ -26,56 +26,11 @@ export class SummaryReporter {
       return;
     }
 
-    // Continue with existing markdown output
+    // Generate markdown that matches HTML dashboard structure
     const summary = this.trendAnalyzer.getTrendSummary(metrics, historicalData, currentTrendData.matrixKey);
     const insights = this.trendAnalyzer.getPerformanceInsights(metrics, historicalData, currentTrendData.matrixKey);
     
-    let summaryMarkdown = `## 🧪 Test Metrics Report (${framework})\n\n`;
-    
-    // Main summary table (most important - overall status)
-    summaryMarkdown += this.generateSummaryTable(metrics, summary);
-    
-    // Test execution details
-    summaryMarkdown += `## 📈 Test Execution Details\n`;
-    summaryMarkdown += this.generateExecutionDetails(metrics);
-    
-    // Performance insights
-    summaryMarkdown += `## 📊 Performance Insights\n`;
-    if (insights.length > 0) {
-      insights.forEach(insight => {
-        summaryMarkdown += `- ${insight}\n`;
-      });
-    } else {
-      summaryMarkdown += `- No significant changes detected\n`;
-    }
-    summaryMarkdown += '\n';
-    
-    // Failure categories FIRST (most urgent - what broke)
-    if (metrics.failureCategories.length > 0) {
-      summaryMarkdown += `## ❌ Failure Analysis\n`;
-      summaryMarkdown += this.generateFailureCategoriesTable(metrics.failureCategories);
-      summaryMarkdown += '\n';
-    }
-    
-    // Flaky tests SECOND (unreliable tests need attention)
-    if (metrics.flakyTests.length > 0) {
-      summaryMarkdown += `## 🐛 Flaky Tests Detected\n`;
-      summaryMarkdown += this.generateFlakyTestsTable(metrics.flakyTests);
-      summaryMarkdown += '\n';
-    }
-    
-    // Performance & Slowest Tests THIRD (less urgent than failures)
-    if (metrics.slowTests.length > 0) {
-      summaryMarkdown += `## 🐌 Slowest Tests (Top ${metrics.slowTests.length})\n`;
-      summaryMarkdown += this.generateSlowTestsTable(metrics.slowTests);
-      summaryMarkdown += '\n';
-    }
-    
-    // Trend chart LAST (historical data is least urgent)
-    if (historicalData.length > 1) {
-      summaryMarkdown += `## 📊 Performance Trend (Last 7 Days)\n`;
-      summaryMarkdown += this.generateTrendChart(historicalData.slice(-7));
-    }
+    const summaryMarkdown = this.generateHtmlStructuredMarkdown(metrics, summary, insights, framework, historicalData);
     
     // Write to GitHub Actions job summary
     await core.summary
@@ -229,5 +184,115 @@ export class SummaryReporter {
   private formatTrendValue(trend: any): string {
     const sign = trend.changePercent > 0 ? '+' : '';
     return `${sign}${trend.changePercent.toFixed(1)}%`;
+  }
+
+  private generateHtmlStructuredMarkdown(
+    metrics: TestMetrics,
+    summary: any,
+    insights: string[],
+    framework: string,
+    historicalData: TrendData[]
+  ): string {
+    // Safety checks to prevent undefined errors
+    const safeMetrics = {
+      passedTests: metrics?.passedTests || 0,
+      failedTests: metrics?.failedTests || 0,
+      skippedTests: metrics?.skippedTests || 0,
+      totalTests: metrics?.totalTests || 0,
+      totalDuration: metrics?.totalDuration || 0,
+      averageDuration: metrics?.averageDuration || 0,
+      passRate: metrics?.passRate || 0,
+      flakyTests: metrics?.flakyTests || [],
+      slowTests: metrics?.slowTests || []
+    };
+
+    const slowestTest = safeMetrics.slowTests.length > 0 ? safeMetrics.slowTests[0] : null;
+    const performanceInsight = insights.length > 0 ? insights[0] : 'No significant changes detected';
+
+    // Format duration for title
+    const minutes = Math.floor(safeMetrics.totalDuration / 60);
+    const seconds = (safeMetrics.totalDuration % 60).toFixed(2);
+    const durationFormatted = `${minutes}m ${seconds.toString().padStart(5, '0')}s`;
+
+    let markdown = `# 🧪 Test Metrics Report (${framework})\n\n`;
+    
+    // Test Execution Details Section (matching HTML structure)
+    markdown += `## 📄 Test Execution Details (${safeMetrics.passedTests}/${safeMetrics.totalTests} Passed) [${durationFormatted}]\n\n`;
+    
+    markdown += `| Status | Count | Percentage |\n`;
+    markdown += `|--------|-------|------------|\n`;
+    markdown += `| 🟢 Passed | ${safeMetrics.passedTests} | ${safeMetrics.totalTests > 0 ? ((safeMetrics.passedTests / safeMetrics.totalTests) * 100).toFixed(1) : '0.0'}% |\n`;
+    
+    if (safeMetrics.failedTests > 0) {
+      markdown += `| 🔴 Failed | ${safeMetrics.failedTests} | ${safeMetrics.totalTests > 0 ? ((safeMetrics.failedTests / safeMetrics.totalTests) * 100).toFixed(1) : '0.0'}% |\n`;
+    }
+    
+    if (safeMetrics.skippedTests > 0) {
+      markdown += `| 🟡 Skipped | ${safeMetrics.skippedTests} | ${safeMetrics.totalTests > 0 ? ((safeMetrics.skippedTests / safeMetrics.totalTests) * 100).toFixed(1) : '0.0'}% |\n`;
+    }
+    
+    markdown += '\n';
+
+    // Metrics Table (matching HTML structure exactly)
+    markdown += `| Metric | Current | Previous | Trend |\n`;
+    markdown += `|--------|---------|----------|-------|\n`;
+    markdown += `| ■ Tests | ${safeMetrics.totalTests} tests | ${summary.testCountTrend?.previous || '0'} | ${this.formatMarkdownTrendBadge(summary.testCountTrend)} |\n`;
+    markdown += `| ✓ Pass Rate | **${safeMetrics.passRate.toFixed(1)}%** | ${summary.passRateTrend?.previous?.toFixed(1) || '0.0'}% | ${this.formatMarkdownTrendBadge(summary.passRateTrend)} |\n`;
+    markdown += `| ● Duration | ${safeMetrics.totalDuration.toFixed(2)}s | ${summary.durationTrend?.previous?.toFixed(2) || '0.00'}s | ${this.formatMarkdownTrendBadge(summary.durationTrend)} |\n`;
+    markdown += `| ● Avg Duration | ${safeMetrics.averageDuration.toFixed(2)}s | — | — |\n`;
+    markdown += `| ⚡️ Flaky | ${safeMetrics.flakyTests.length} | ${summary.flakyTestsTrend?.previous || '0'} | ${this.formatMarkdownTrendBadge(summary.flakyTestsTrend || { trend: 'stable', changePercent: 0 })} |\n`;
+    
+    if (slowestTest) {
+      markdown += `| 🐌 Slowest Test<br/>${slowestTest.name} | **${slowestTest.duration.toFixed(2)}s** | — | — |\n`;
+    }
+    
+    markdown += `| 📊 Performance Insights<br/>${performanceInsight} | — | — | — |\n`;
+    
+    markdown += '\n';
+
+    // Additional sections if data exists (matching HTML behavior)
+    if (safeMetrics.flakyTests.length > 0) {
+      markdown += `## 🐛 Flaky Tests Detected\n\n`;
+      markdown += this.generateFlakyTestsTable(safeMetrics.flakyTests);
+      markdown += '\n';
+    }
+
+    if (metrics.failureCategories && metrics.failureCategories.length > 0) {
+      markdown += `## ❌ Failure Analysis\n\n`;
+      markdown += this.generateFailureCategoriesTable(metrics.failureCategories);
+      markdown += '\n';
+    }
+
+    if (safeMetrics.slowTests.length > 1) {
+      markdown += `## 🐌 Slowest Tests (Top ${Math.min(safeMetrics.slowTests.length, 10)})\n\n`;
+      markdown += this.generateSlowTestsTable(safeMetrics.slowTests);
+      markdown += '\n';
+    }
+
+    if (historicalData.length > 1) {
+      markdown += `## 📊 Performance Trend (Last 7 Days)\n\n`;
+      markdown += this.generateTrendChart(historicalData.slice(-7));
+    }
+
+    // Footer
+    markdown += `\n---\n*Job summary generated at ${new Date().toLocaleString()}*\n`;
+
+    return markdown;
+  }
+
+  private formatMarkdownTrendBadge(trend: any): string {
+    if (!trend || (trend.previous === 0 && trend.current !== 0)) {
+      return '➡️ **New**';
+    }
+
+    const changePercent = trend.changePercent || 0;
+    
+    if (changePercent > 5) {
+      return `📈 **+${changePercent.toFixed(1)}%**`;
+    } else if (changePercent < -5) {
+      return `📉 **${changePercent.toFixed(1)}%**`;
+    } else {
+      return `➡️ ${changePercent.toFixed(1)}%`;
+    }
   }
 }
