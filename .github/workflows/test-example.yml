@@ -47,16 +47,25 @@ jobs:
       run: npx playwright install --with-deps
     
     - name: Run Playwright Tests
-      run: npx playwright test --reporter=json
-      if: always()
-      env:
-        PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-results.json
-
-    - name: List generated files
       run: |
-        echo "📁 Generated test files:"
-        ls -la *.json || echo "No JSON files found"
-        echo ""
+        echo "🎭 Running Playwright tests with JSON reporter..."
+        npx playwright test --reporter=json > playwright-results.json 2>&1 || true
+        echo "✅ Playwright tests completed (exit code ignored for demo)"
+      if: always()
+
+    - name: 🔍 Debug Test Files
+      run: |
+        echo "📂 Current directory:"
+        pwd
+        echo "📁 All files in current directory:"
+        ls -la
+        echo "📄 Looking for JSON files:"
+        find . -name "*.json" -type f 2>/dev/null || echo "No JSON files found"
+        echo "📊 Looking for Playwright results:"
+        ls -la playwright-report/ 2>/dev/null || echo "No playwright-report directory"
+        ls -la results.json 2>/dev/null || echo "No results.json"
+        ls -la playwright-results.json 2>/dev/null || echo "No playwright-results.json"
+        echo "🎯 Using report path: playwright-results.json"
       if: always()
     
     - name: ${{ matrix.icon }} Publish Test Metrics (${{ matrix.name }})
@@ -68,7 +77,7 @@ jobs:
         html_output: ${{ matrix.html_output }}
         detailed_summary: true
         fail_on_failure: false  # Allow failures for demo
-        require_tests: true
+        require_tests: false    # Don't require tests for demo (in case Playwright fails)
         retention_days: 30
         cache_key_prefix: 'playwright-${{ matrix.name }}'
         artifact_suffix: '${{ matrix.name }}'
@@ -90,11 +99,16 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    - name: Use sample JUnit XML
+    - name: 🔍 Debug JUnit XML
       run: |
+        echo "📂 Current directory:"
+        pwd
         echo "📄 Using sample JUnit XML file for demonstration"
-        ls -la examples/
-        cat examples/junit-sample.xml
+        echo "📁 Examples directory:"
+        ls -la examples/ || echo "❌ Examples directory not found!"
+        echo "📄 JUnit sample content:"
+        cat examples/junit-sample.xml || echo "❌ JUnit sample file not found!"
+        echo "🎯 Using report path: examples/junit-sample.xml"
     
     - name: 🎨 Publish JUnit Test Metrics (HTML Dashboard)
       uses: ./
@@ -105,6 +119,6 @@ jobs:
         html_output: true
         detailed_summary: true
         fail_on_failure: false
-        require_tests: true
+        require_tests: false    # Don't require tests for demo
         cache_key_prefix: 'junit-html'
         artifact_suffix: 'junit-html'

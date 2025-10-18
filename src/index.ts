@@ -11,7 +11,7 @@ import { getMatrixKey } from './utils/matrix';
 import { ParsedTestData, TrendData } from './types';
 
 // Debug flag - controlled by environment variable
-const DEBUG = process.env.DEBUG_METRICS === 'true' || process.env.RUNNER_DEBUG === '1';
+const DEBUG = process.env.DEBUG_METRICS === 'true' || process.env.RUNNER_DEBUG === '1' || true;  // Enable debug for testing
 
 async function run(): Promise<void> {
   try {
@@ -31,6 +31,17 @@ async function run(): Promise<void> {
 
     // Find test result files
     const files = glob.sync(reportPaths, { nodir: true });
+    
+    // Debug: List all files that glob found
+    if (DEBUG) {
+      core.info(`🔍 DEBUG: Glob pattern "${reportPaths}" found ${files.length} files:`);
+      files.forEach(file => core.info(`  - ${file}`));
+      
+      // Also try listing current directory
+      const allFiles = glob.sync('**/*', { nodir: true });
+      core.info(`🔍 DEBUG: All files in workspace (first 20):`);
+      allFiles.slice(0, 20).forEach(file => core.info(`  - ${file}`));
+    }
     
     if (files.length === 0) {
       const message = `No test result files found matching pattern: ${reportPaths}`;

@@ -39,18 +39,28 @@ export class SummaryReporter {
   }
 
   private generateSummaryTable(metrics: TestMetrics, summary: any): string {
-    const statusEmoji = this.getStatusEmoji(metrics.passRate);
-    const durationTrend = this.getTrendEmoji(summary.durationTrend.trend);
-    const passRateTrend = this.getTrendEmoji(summary.passRateTrend.trend);
+    // Safety checks to prevent undefined errors
+    const safeMetrics = {
+      passRate: metrics?.passRate || 0,
+      totalTests: metrics?.totalTests || 0,
+      passedTests: metrics?.passedTests || 0,
+      totalDuration: metrics?.totalDuration || 0,
+      averageDuration: metrics?.averageDuration || 0,
+      flakyTests: metrics?.flakyTests || []
+    };
+    
+    const statusEmoji = this.getStatusEmoji(safeMetrics.passRate);
+    const durationTrend = this.getTrendEmoji(summary?.durationTrend?.trend || 'stable');
+    const passRateTrend = this.getTrendEmoji(summary?.passRateTrend?.trend || 'stable');
     
     // Format metrics with better visual presentation
-    const testsStatus = `${metrics.totalTests} tests`;
-    const passRateValue = `${metrics.passRate.toFixed(1)}%`;
-    const durationValue = `${metrics.totalDuration.toFixed(2)}s`;
-    const avgDurValue = metrics.averageDuration >= 1 ? 
-      `${metrics.averageDuration.toFixed(2)}s` : 
-      `${(metrics.averageDuration * 1000).toFixed(0)}ms`;
-    const flakyValue = metrics.flakyTests.length;
+    const testsStatus = `${safeMetrics.totalTests} tests`;
+    const passRateValue = `${safeMetrics.passRate.toFixed(1)}%`;
+    const durationValue = `${safeMetrics.totalDuration.toFixed(2)}s`;
+    const avgDurValue = safeMetrics.averageDuration >= 1 ? 
+      `${safeMetrics.averageDuration.toFixed(2)}s` : 
+      `${(safeMetrics.averageDuration * 1000).toFixed(0)}ms`;
+    const flakyValue = safeMetrics.flakyTests.length;
     
     // Format trend display - show "—" if no previous data
     const formatTrend = (trend: any) => {
@@ -60,28 +70,29 @@ export class SummaryReporter {
       return `${this.getTrendEmoji(trend.trend)} ${this.formatTrendValue(trend)}`;
     };
     
-    return `**Overall Status:** ${statusEmoji} ${metrics.passedTests}/${metrics.totalTests} tests passed
+    return `**Overall Status:** ${statusEmoji} ${safeMetrics.passedTests}/${safeMetrics.totalTests} tests passed
 
 | Metric | Current | Previous | Trend |
 |:-------|:-------:|:--------:|:-----:|
-| 📊 Tests | ${testsStatus} | ${summary.testCountTrend.previous} | ${formatTrend(summary.testCountTrend)} |
-| ✅ Pass Rate | ${passRateValue} | ${summary.passRateTrend.previous.toFixed(1)}% | ${formatTrend(summary.passRateTrend)} |
-| ⏱️ Duration | ${durationValue} | ${summary.durationTrend.previous.toFixed(2)}s | ${formatTrend(summary.durationTrend)} |
+| 📊 Tests | ${testsStatus} | ${summary?.testCountTrend?.previous || '0'} | ${formatTrend(summary?.testCountTrend)} |
+| ✅ Pass Rate | ${passRateValue} | ${summary?.passRateTrend?.previous?.toFixed(1) || '0.0'}% | ${formatTrend(summary?.passRateTrend)} |
+| ⏱️ Duration | ${durationValue} | ${summary?.durationTrend?.previous?.toFixed(2) || '0.00'}s | ${formatTrend(summary?.durationTrend)} |
 | ⏱️ Avg Duration | ${avgDurValue} | — | — |
-| 🐛 Flaky | ${flakyValue} | ${summary.flakyTestsTrend.previous} | ${formatTrend(summary.flakyTestsTrend)} |
+| 🐛 Flaky | ${flakyValue} | ${summary?.flakyTestsTrend?.previous || '0'} | ${formatTrend(summary?.flakyTestsTrend)} |
 
 \n`;
   }
 
   private generateExecutionDetails(metrics: TestMetrics): string {
-    const passed = metrics.passedTests;
-    const failed = metrics.failedTests;
-    const skipped = metrics.skippedTests;
-    const total = metrics.totalTests;
+    // Safety checks to prevent undefined errors
+    const passed = metrics?.passedTests || 0;
+    const failed = metrics?.failedTests || 0;
+    const skipped = metrics?.skippedTests || 0;
+    const total = metrics?.totalTests || 0;
     
-    const passedPercent = ((passed/total)*100).toFixed(1);
-    const failedPercent = ((failed/total)*100).toFixed(1);
-    const skippedPercent = ((skipped/total)*100).toFixed(1);
+    const passedPercent = total > 0 ? ((passed/total)*100).toFixed(1) : '0.0';
+    const failedPercent = total > 0 ? ((failed/total)*100).toFixed(1) : '0.0';
+    const skippedPercent = total > 0 ? ((skipped/total)*100).toFixed(1) : '0.0';
     
     let table = `| Status | Count | Percentage |\n`;
     table += `|--------|-------|------------|\n`;
