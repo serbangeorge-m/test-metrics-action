@@ -227,7 +227,7 @@ export class SummaryReporter {
     let markdown = `# 🧪 Test Metrics Report (${framework})\n\n`;
     
     // Test Execution Details Section (matching HTML structure)
-    markdown += `## 📄 Test Execution Details (${safeMetrics.passedTests}/${safeMetrics.totalTests} Passed)\n\n`;
+    markdown += `## 📄 Test Execution Details (${safeMetrics.passedTests}/${safeMetrics.totalTests} Passed) [${durationFormatted}]\n\n`;
     
     markdown += `| Status | Count | Percentage |\n`;
     markdown += `|--------|-------|------------|\n`;
