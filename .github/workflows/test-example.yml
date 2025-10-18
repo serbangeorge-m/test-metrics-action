@@ -33,6 +33,10 @@ jobs:
       if: always()
       env:
         PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-results.json
+
+    - name: List files
+      run: ls -l
+      if: always()
     
     - name: Publish Test Metrics
       uses: ./  # Use local action
