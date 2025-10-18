@@ -1,15 +1,13 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as glob from 'glob';
-import * as path from 'path';
-
-import { JUnitParser } from './parsers/junitParser';
-import { JestParser } from './parsers/jestParser';
-import { PlaywrightParser } from './parsers/playwrightParser';
+import { getParser } from './parsers/parserFactory';
 import { MetricsCalculator } from './metrics/calculator';
 import { TrendCache } from './storage/cache';
 import { GitHubTrendManager } from './storage/githubTrends';
 import { SummaryReporter } from './reporters/summaryReporter';
+import { annotatePullRequest } from './reporters/prReporter';
+import { getMatrixKey } from './utils/matrix';
 import { ParsedTestData, TrendData } from './types';
 
 // Debug flag - controlled by environment variable
@@ -52,13 +50,21 @@ async function run(): Promise<void> {
     for (const file of files) {
       try {
         if (DEBUG) core.info(`📄 Parsing file: ${file}`);
-        const data = await parseTestFile(file, testFramework);
+        const parser = getParser(file, testFramework);
+        const data = await parser.parseFile(file);
         if (DEBUG) console.log(`DEBUG: Parsed data from ${file}:`, JSON.stringify(data).substring(0, 300));
         parsedData.push(data);
         const testCount = data.suites.reduce((sum, s) => sum + s.tests.length, 0);
         core.info(`✅ Parsed ${file} (${data.framework.type}) - found ${data.suites.length} suites with ${testCount} tests`);
       } catch (error) {
-        core.warning(`Failed to parse ${file}: ${error}`);
+        if (error instanceof Error) {
+          core.warning(`Failed to parse ${file}: ${error.message}`);
+        } else {
+          core.warning(`Failed to parse ${file}: ${String(error)}`);
+        }
+        if (DEBUG) {
+          console.error(error);
+        }
       }
     }
 
@@ -145,51 +151,14 @@ async function run(): Promise<void> {
     core.info('Test metrics analysis completed successfully');
 
   } catch (error) {
-    core.setFailed(`Action failed: ${error}`);
-  }
-}
-
-async function parseTestFile(filePath: string, framework: string): Promise<ParsedTestData> {
-  const extension = path.extname(filePath).toLowerCase();
-  
-  // Auto-detect framework based on file extension and content
-  if (framework === 'auto') {
-    if (extension === '.xml') {
-      framework = 'junit';
-    } else if (extension === '.json') {
-      // Try to detect from file content
-      const fs = require('fs');
-      const content = fs.readFileSync(filePath, 'utf-8');
-      const jsonData = JSON.parse(content);
-      
-      if (jsonData.testResults || jsonData.suites) {
-        framework = 'jest';
-      } else if (Array.isArray(jsonData) || jsonData.suites) {
-        framework = 'playwright';
-      } else {
-        throw new Error('Unable to auto-detect test framework from JSON file');
-      }
+    if (error instanceof Error) {
+      core.setFailed(`Action failed: ${error.message}`);
     } else {
-      throw new Error(`Unsupported file extension: ${extension}`);
+      core.setFailed(`Action failed: ${error}`);
     }
-  }
-
-  // Parse based on detected framework
-  switch (framework.toLowerCase()) {
-    case 'junit':
-      const junitParser = new JUnitParser();
-      return await junitParser.parseFile(filePath);
-    
-    case 'jest':
-      const jestParser = new JestParser();
-      return await jestParser.parseFile(filePath);
-    
-    case 'playwright':
-      const playwrightParser = new PlaywrightParser();
-      return await playwrightParser.parseFile(filePath);
-    
-    default:
-      throw new Error(`Unsupported test framework: ${framework}`);
+    if (DEBUG) {
+      console.error(error);
+    }
   }
 }
 
@@ -209,65 +178,6 @@ function combineParsedData(parsedDataArray: ParsedTestData[]): ParsedTestData {
     framework,
     timestamp
   };
-}
-
-async function annotatePullRequest(metrics: any, annotateOnly: boolean): Promise<void> {
-  if (github.context.eventName !== 'pull_request') {
-    return; // Only annotate on pull requests
-  }
-
-  const octokit = github.getOctokit(process.env.GITHUB_TOKEN || '');
-  
-  const comment = `## 🧪 Test Results
-  
-**Status:** ${metrics.passRate >= 95 ? '🟢 All tests passed' : metrics.passRate >= 80 ? '🟡 Some tests failed' : '🔴 Tests failing'}
-**Pass Rate:** ${metrics.passRate.toFixed(1)}% (${metrics.passedTests}/${metrics.totalTests})
-**Duration:** ${metrics.totalDuration.toFixed(1)}s
-${metrics.flakyTests.length > 0 ? `**Flaky Tests:** ${metrics.flakyTests.length}` : ''}
-
-${metrics.failedTests > 0 ? `⚠️ ${metrics.failedTests} test(s) failed` : '✅ All tests passed!'}`;
-
-  try {
-    await octokit.rest.issues.createComment({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      issue_number: github.context.issue.number,
-      body: comment
-    });
-  } catch (error) {
-    core.warning(`Failed to create PR comment: ${error}`);
-  }
-}
-
-function getMatrixKey(): string | undefined {
-  // Capture matrix context from GitHub Actions environment
-  // Matrix keys are available as environment variables like:
-  // MATRIX_NODE_VERSION, MATRIX_OS, etc.
-  const matrixValues: string[] = [];
-  
-  // Common matrix variable names
-  const matrixVars = [
-    'MATRIX_NODE_VERSION',
-    'MATRIX_OS',
-    'MATRIX_PYTHON_VERSION',
-    'MATRIX_JAVA_VERSION',
-    'MATRIX_RUBY_VERSION'
-  ];
-  
-  for (const varName of matrixVars) {
-    const value = process.env[varName];
-    if (value) {
-      matrixValues.push(`${varName.replace('MATRIX_', '').toLowerCase()}:${value}`);
-    }
-  }
-  
-  // Also check for generic matrix context via GitHub context
-  // In matrix builds, github.context.job includes matrix info
-  if (github.context.job && github.context.job.includes('matrix')) {
-    matrixValues.push(github.context.job);
-  }
-  
-  return matrixValues.length > 0 ? matrixValues.join(',') : undefined;
 }
 
 // Run the action

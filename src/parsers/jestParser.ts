@@ -1,10 +1,9 @@
-import * as fs from 'fs';
-import { TestSuite, TestResult, TestFramework, ParsedTestData } from '../types';
+import { TestSuite, TestResult, ParsedTestData } from '../types';
+import { BaseParser } from './baseParser';
 
-export class JestParser {
-  async parseFile(filePath: string): Promise<ParsedTestData> {
-    const jsonContent = fs.readFileSync(filePath, 'utf-8');
-    const jestData = JSON.parse(jsonContent);
+export class JestParser extends BaseParser {
+  protected async parse(content: string): Promise<ParsedTestData> {
+    const jestData = JSON.parse(content);
     return this.parseJestJSON(jestData);
   }
 

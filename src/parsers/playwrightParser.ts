@@ -1,10 +1,9 @@
-import * as fs from 'fs';
-import { TestSuite, TestResult, TestFramework, ParsedTestData } from '../types';
+import { TestSuite, TestResult, ParsedTestData } from '../types';
+import { BaseParser } from './baseParser';
 
-export class PlaywrightParser {
-  async parseFile(filePath: string): Promise<ParsedTestData> {
-    const jsonContent = fs.readFileSync(filePath, 'utf-8');
-    const playwrightData = JSON.parse(jsonContent);
+export class PlaywrightParser extends BaseParser {
+  protected async parse(content: string): Promise<ParsedTestData> {
+    const playwrightData = JSON.parse(content);
     return this.parsePlaywrightJSON(playwrightData);
   }
 

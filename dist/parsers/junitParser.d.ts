@@ -1,6 +1,7 @@
 import { ParsedTestData } from '../types';
-export declare class JUnitParser {
-    parseFile(filePath: string): Promise<ParsedTestData>;
+import { BaseParser } from './baseParser';
+export declare class JUnitParser extends BaseParser {
+    protected parse(content: string): Promise<ParsedTestData>;
     private parseJUnitXML;
     private determineTestStatus;
     private extractErrorMessage;

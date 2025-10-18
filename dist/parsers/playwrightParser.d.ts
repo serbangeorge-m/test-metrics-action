@@ -1,6 +1,7 @@
 import { ParsedTestData } from '../types';
-export declare class PlaywrightParser {
-    parseFile(filePath: string): Promise<ParsedTestData>;
+import { BaseParser } from './baseParser';
+export declare class PlaywrightParser extends BaseParser {
+    protected parse(content: string): Promise<ParsedTestData>;
     private parsePlaywrightJSON;
     private parsePlaywrightSuite;
     private mapPlaywrightStatus;

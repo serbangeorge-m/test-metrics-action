@@ -1,6 +1,7 @@
 import { ParsedTestData } from '../types';
-export declare class JestParser {
-    parseFile(filePath: string): Promise<ParsedTestData>;
+import { BaseParser } from './baseParser';
+export declare class JestParser extends BaseParser {
+    protected parse(content: string): Promise<ParsedTestData>;
     private parseJestJSON;
     private parseJestSuite;
 }

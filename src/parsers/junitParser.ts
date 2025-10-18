@@ -1,20 +1,19 @@
-import * as fs from 'fs';
 import * as xml2js from 'xml2js';
-import { TestSuite, TestResult, TestFramework, ParsedTestData } from '../types';
+import { TestSuite, TestResult, ParsedTestData } from '../types';
+import { BaseParser } from './baseParser';
 
 // Debug flag
 const DEBUG = process.env.DEBUG_METRICS === 'true' || process.env.RUNNER_DEBUG === '1';
 
-export class JUnitParser {
-  async parseFile(filePath: string): Promise<ParsedTestData> {
-    const xmlContent = fs.readFileSync(filePath, 'utf-8');
+export class JUnitParser extends BaseParser {
+  protected async parse(content: string): Promise<ParsedTestData> {
     const parser = new xml2js.Parser({
       explicitArray: false,
       mergeAttrs: true,
       trim: true
     });
 
-    const result = await parser.parseStringPromise(xmlContent);
+    const result = await parser.parseStringPromise(content);
     return this.parseJUnitXML(result);
   }
 

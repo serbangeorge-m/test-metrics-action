@@ -1,0 +1,51 @@
+name: Test Action Output
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-output:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./test-output
+
+      - name: Run tests
+        run: npm test
+        working-directory: ./test-output
+
+      - name: Run test-metrics-action
+        id: test-metrics
+        uses: ./
+        with:
+          report_paths: 'test-output/jest-results.json'
+          test_framework: 'jest'
+
+      - name: Verify outputs
+        run: |
+          echo "Total tests: ${{ steps.test-metrics.outputs.total_tests }}"
+          echo "Passed tests: ${{ steps.test-metrics.outputs.passed_tests }}"
+          echo "Failed tests: ${{ steps.test-metrics.outputs.failed_tests }}"
+          if [ "${{ steps.test-metrics.outputs.total_tests }}" != "1" ]; then
+            echo "::error::Total tests output is not correct!"
+            exit 1
+          fi
+          if [ "${{ steps.test-metrics.outputs.passed_tests }}" != "1" ]; then
+            echo "::error::Passed tests output is not correct!"
+            exit 1
+          fi
+          if [ "${{ steps.test-metrics.outputs.failed_tests }}" != "0" ]; then
+            echo "::error::Failed tests output is not correct!"
+            exit 1
+          fi
