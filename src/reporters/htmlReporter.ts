@@ -27,14 +27,27 @@ export class HtmlReporter {
   }
 
   private generateHtmlContent(metrics: TestMetrics, summary: any, insights: string[], framework: string): string {
-    const testData = {
-      passed: metrics.passedTests,
-      failed: metrics.failedTests,
-      skipped: metrics.skippedTests,
-      durationInSeconds: metrics.totalDuration
+    // Safety checks to prevent undefined errors
+    const safeMetrics = {
+      passedTests: metrics?.passedTests || 0,
+      failedTests: metrics?.failedTests || 0,
+      skippedTests: metrics?.skippedTests || 0,
+      totalTests: metrics?.totalTests || 0,
+      totalDuration: metrics?.totalDuration || 0,
+      averageDuration: metrics?.averageDuration || 0,
+      passRate: metrics?.passRate || 0,
+      flakyTests: metrics?.flakyTests || [],
+      slowTests: metrics?.slowTests || []
     };
 
-    const slowestTest = metrics.slowTests.length > 0 ? metrics.slowTests[0] : null;
+    const testData = {
+      passed: safeMetrics.passedTests,
+      failed: safeMetrics.failedTests,
+      skipped: safeMetrics.skippedTests,
+      durationInSeconds: safeMetrics.totalDuration
+    };
+
+    const slowestTest = safeMetrics.slowTests.length > 0 ? safeMetrics.slowTests[0] : null;
     const performanceInsight = insights.length > 0 ? insights[0] : 'No significant changes detected';
     
     return `<!DOCTYPE html>
@@ -89,18 +102,18 @@ export class HtmlReporter {
                         <tbody class="divide-y divide-gray-700">
                             <tr>
                                 <td class="py-3 px-4 text-green-400 font-semibold flex items-center"><span class="w-3 h-3 bg-green-400 rounded-full mr-3"></span>Passed</td>
-                                <td class="py-3 px-4" id="passed-count">${testData.passed}</td>
-                                <td class="py-3 px-4" id="passed-percentage">${((testData.passed / metrics.totalTests) * 100).toFixed(1)}%</td>
+                            <td class="py-3 px-4" id="passed-count">${testData.passed}</td>
+                            <td class="py-3 px-4" id="passed-percentage">${safeMetrics.totalTests > 0 ? ((testData.passed / safeMetrics.totalTests) * 100).toFixed(1) : '0.0'}%</td>
                             </tr>
                             <tr id="failed-row" style="display: ${testData.failed > 0 ? 'table-row' : 'none'};">
                                 <td class="py-3 px-4 text-red-400 font-semibold flex items-center"><span class="w-3 h-3 bg-red-400 rounded-full mr-3"></span>Failed</td>
                                 <td class="py-3 px-4" id="failed-count">${testData.failed}</td>
-                                <td class="py-3 px-4" id="failed-percentage">${((testData.failed / metrics.totalTests) * 100).toFixed(1)}%</td>
+                                <td class="py-3 px-4" id="failed-percentage">${safeMetrics.totalTests > 0 ? ((testData.failed / safeMetrics.totalTests) * 100).toFixed(1) : '0.0'}%</td>
                             </tr>
                             <tr id="skipped-row" style="display: ${testData.skipped > 0 ? 'table-row' : 'none'};">
                                 <td class="py-3 px-4 text-gray-400 font-semibold flex items-center"><span class="w-3 h-3 bg-gray-400 rounded-full mr-3"></span>Skipped</td>
                                 <td class="py-3 px-4" id="skipped-count">${testData.skipped}</td>
-                                <td class="py-3 px-4" id="skipped-percentage">${((testData.skipped / metrics.totalTests) * 100).toFixed(1)}%</td>
+                                <td class="py-3 px-4" id="skipped-percentage">${safeMetrics.totalTests > 0 ? ((testData.skipped / safeMetrics.totalTests) * 100).toFixed(1) : '0.0'}%</td>
                             </tr>
                         </tbody>
                     </table>
@@ -121,14 +134,14 @@ export class HtmlReporter {
                     <tbody class="divide-y divide-gray-700">
                         <tr>
                             <td class="py-3 px-4 flex items-center"><span class="text-green-400 mr-3">■</span>Tests</td>
-                            <td class="py-3 px-4">${metrics.totalTests} tests</td>
-                            <td class="py-3 px-4">${summary.testCountTrend.previous || '0'}</td>
+                            <td class="py-3 px-4">${safeMetrics.totalTests} tests</td>
+                            <td class="py-3 px-4">${summary.testCountTrend?.previous || '0'}</td>
                             <td class="py-3 px-4">${this.formatTrendBadge(summary.testCountTrend)}</td>
                         </tr>
                         <tr>
                             <td class="py-3 px-4 flex items-center"><span class="text-green-400 mr-3">✓</span>Pass Rate</td>
-                            <td class="py-3 px-4 font-semibold ${metrics.passRate >= 95 ? 'text-green-400' : metrics.passRate >= 80 ? 'text-yellow-400' : 'text-red-400'}">${metrics.passRate.toFixed(1)}%</td>
-                            <td class="py-3 px-4">${summary.passRateTrend.previous?.toFixed(1) || '0.0'}%</td>
+                            <td class="py-3 px-4 font-semibold ${safeMetrics.passRate >= 95 ? 'text-green-400' : safeMetrics.passRate >= 80 ? 'text-yellow-400' : 'text-red-400'}">${safeMetrics.passRate.toFixed(1)}%</td>
+                            <td class="py-3 px-4">${summary.passRateTrend?.previous?.toFixed(1) || '0.0'}%</td>
                             <td class="py-3 px-4">${this.formatTrendBadge(summary.passRateTrend)}</td>
                         </tr>
                         <tr>
@@ -139,13 +152,13 @@ export class HtmlReporter {
                         </tr>
                         <tr>
                             <td class="py-3 px-4 flex items-center"><span class="text-blue-400 mr-3">●</span>Avg Duration</td>
-                            <td class="py-3 px-4">${metrics.averageDuration.toFixed(2)}s</td>
+                            <td class="py-3 px-4">${safeMetrics.averageDuration.toFixed(2)}s</td>
                             <td class="py-3 px-4">—</td>
                             <td class="py-3 px-4">—</td>
                         </tr>
                         <tr>
                             <td class="py-3 px-4 flex items-center"><span class="text-yellow-400 mr-3">⚡️</span>Flaky</td>
-                            <td class="py-3 px-4">${metrics.flakyTests.length}</td>
+                            <td class="py-3 px-4">${safeMetrics.flakyTests.length}</td>
                             <td class="py-3 px-4">${summary.flakyTestsTrend?.previous || '0'}</td>
                             <td class="py-3 px-4">${this.formatTrendBadge(summary.flakyTestsTrend || { trend: 'stable', changePercent: 0 })}</td>
                         </tr>

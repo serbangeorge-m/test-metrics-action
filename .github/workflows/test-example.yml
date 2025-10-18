@@ -71,6 +71,7 @@ jobs:
         require_tests: true
         retention_days: 30
         cache_key_prefix: 'playwright-${{ matrix.name }}'
+        artifact_suffix: '${{ matrix.name }}'
         
     # Add a job to demonstrate JUnit XML support with HTML output
   junit-demo:
@@ -105,3 +106,5 @@ jobs:
         detailed_summary: true
         fail_on_failure: false
         require_tests: true
+        cache_key_prefix: 'junit-html'
+        artifact_suffix: 'junit-html'

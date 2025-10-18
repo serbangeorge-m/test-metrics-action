@@ -52,6 +52,8 @@ jobs:
           html_output: ${{ matrix.html_output }}
           detailed_summary: true
           fail_on_failure: false  # Don't fail for demo purposes
+          cache_key_prefix: 'test-output-${{ matrix.output_type }}'
+          artifact_suffix: '${{ matrix.output_type }}'
 
       - name: Verify outputs
         run: |
