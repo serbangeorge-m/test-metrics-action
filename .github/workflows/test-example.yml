@@ -5,10 +5,31 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      output_format:
+        description: 'Output format for test metrics'
+        required: true
+        default: 'html'
+        type: choice
+        options:
+        - html
+        - markdown
 
 jobs:
-  test:
+  playwright-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: "HTML Dashboard"
+            html_output: true
+            icon: "🎨"
+          - name: "Markdown Report"
+            html_output: false
+            icon: "📝"
+    
+    name: ${{ matrix.icon }} Playwright Tests - ${{ matrix.name }}
     
     steps:
     - uses: actions/checkout@v4
@@ -16,7 +37,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
     
     - name: Install dependencies
@@ -31,17 +52,56 @@ jobs:
       env:
         PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-results.json
 
-    - name: List files
-      run: ls -l
+    - name: List generated files
+      run: |
+        echo "📁 Generated test files:"
+        ls -la *.json || echo "No JSON files found"
+        echo ""
       if: always()
     
-    - name: Publish Test Metrics
+    - name: ${{ matrix.icon }} Publish Test Metrics (${{ matrix.name }})
       uses: ./  # Use local action
       if: always()
       with:
         report_paths: 'playwright-results.json'
-        test_framework: 'auto'
-        fail_on_failure: true
+        test_framework: 'playwright'
+        html_output: ${{ matrix.html_output }}
         detailed_summary: true
+        fail_on_failure: false  # Allow failures for demo
         require_tests: true
         retention_days: 30
+        cache_key_prefix: 'playwright-${{ matrix.name }}'
+        
+    # Add a job to demonstrate JUnit XML support with HTML output
+  junit-demo:
+    runs-on: ubuntu-latest
+    name: 🧪 JUnit XML - HTML Dashboard
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Use sample JUnit XML
+      run: |
+        echo "📄 Using sample JUnit XML file for demonstration"
+        ls -la examples/
+        cat examples/junit-sample.xml
+    
+    - name: 🎨 Publish JUnit Test Metrics (HTML Dashboard)
+      uses: ./
+      if: always()
+      with:
+        report_paths: 'examples/junit-sample.xml'
+        test_framework: 'junit'
+        html_output: true
+        detailed_summary: true
+        fail_on_failure: false
+        require_tests: true

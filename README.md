@@ -8,6 +8,7 @@ Advanced test metrics and visual reporting for Jest, Playwright, and JUnit tests
 - 📊 Advanced metrics (pass rate, duration, flakiness, failures)
 - 📈 90-day trend tracking with GitHub Artifacts
 - 🎨 Rich visual reports in GitHub Actions job summaries
+- ✨ **NEW**: Beautiful HTML dashboard output with Tailwind CSS
 - 🐛 Flakiness detection with retry analysis
 
 ## 🚀 Quick Start
@@ -20,6 +21,7 @@ Advanced test metrics and visual reporting for Jest, Playwright, and JUnit tests
     report_paths: '**/*results.xml'
     fail_on_failure: true
     detailed_summary: true
+    html_output: true  # 🎨 Enable beautiful HTML dashboard
 ```
 
 ## 🔧 Inputs
@@ -36,14 +38,25 @@ Advanced test metrics and visual reporting for Jest, Playwright, and JUnit tests
 | `annotate_only` | Only annotate PR, don't fail the action | No | `false` |
 | `include_passed` | Include passed tests in PR annotations | No | `true` |
 | `require_tests` | Require at least one test result | No | `true` |
+| `html_output` | Generate HTML dashboard instead of markdown summary | No | `false` |
 
 ## 📊 What It Does
 
 1. **Parses** test results from multiple frameworks
 2. **Calculates** metrics: pass rate, duration, flakiness, failures
 3. **Tracks** trends over 90 days with GitHub Artifacts
-4. **Reports** with visual summary, tables, and charts
+4. **Reports** with visual summary, tables, and charts (markdown or HTML)
 5. **Annotates** PRs with results (optional)
+
+## 🎨 HTML Dashboard Preview
+
+When `html_output: true` is enabled, your Job Summary will display a beautiful, responsive dashboard:
+
+- **🌟 Modern Design**: Dark theme with Tailwind CSS
+- **📱 Responsive**: Works on desktop and mobile
+- **🎯 Interactive**: Dynamic content based on test results
+- **📈 Visual Trends**: Color-coded performance indicators
+- **⚡ Fast**: Optimized HTML with inline styles
 
 ## 🧪 Supported Test Frameworks
 

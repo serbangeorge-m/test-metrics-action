@@ -4,18 +4,35 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   test-output:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        output_type: [markdown, html]
+        include:
+          - output_type: markdown
+            html_output: false
+            job_name: "Markdown Summary"
+          - output_type: html
+            html_output: true
+            job_name: "HTML Dashboard"
+    
+    name: Test Output - ${{ matrix.job_name }}
+    
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
@@ -25,18 +42,26 @@ jobs:
         run: npm test
         working-directory: ./test-output
 
-      - name: Run test-metrics-action
+      - name: Run test-metrics-action (${{ matrix.job_name }})
         id: test-metrics
         uses: ./
+        if: always()
         with:
           report_paths: 'test-output/jest-results.json'
           test_framework: 'jest'
+          html_output: ${{ matrix.html_output }}
+          detailed_summary: true
+          fail_on_failure: false  # Don't fail for demo purposes
 
       - name: Verify outputs
         run: |
+          echo "🧪 Test Results for ${{ matrix.job_name }}:"
           echo "Total tests: ${{ steps.test-metrics.outputs.total_tests }}"
           echo "Passed tests: ${{ steps.test-metrics.outputs.passed_tests }}"
           echo "Failed tests: ${{ steps.test-metrics.outputs.failed_tests }}"
+          echo "Pass rate: ${{ steps.test-metrics.outputs.pass_rate }}%"
+          echo "Duration: ${{ steps.test-metrics.outputs.total_duration }}s"
+          
           if [ "${{ steps.test-metrics.outputs.total_tests }}" != "1" ]; then
             echo "::error::Total tests output is not correct!"
             exit 1

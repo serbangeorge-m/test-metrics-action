@@ -1,12 +1,15 @@
 import * as core from '@actions/core';
 import { TestMetrics, TrendData } from '../types';
 import { TrendAnalyzer } from '../metrics/trends';
+import { HtmlReporter } from './htmlReporter';
 
 export class SummaryReporter {
   private trendAnalyzer: TrendAnalyzer;
+  private htmlReporter: HtmlReporter;
 
   constructor() {
     this.trendAnalyzer = new TrendAnalyzer();
+    this.htmlReporter = new HtmlReporter();
   }
 
   async generateJobSummary(
@@ -15,6 +18,15 @@ export class SummaryReporter {
     framework: string,
     currentTrendData: TrendData
   ): Promise<void> {
+    const htmlOutput = core.getBooleanInput('html_output');
+    
+    if (htmlOutput) {
+      // Use HTML reporter for dashboard output
+      await this.htmlReporter.generateHtmlSummary(metrics, historicalData, framework, currentTrendData);
+      return;
+    }
+
+    // Continue with existing markdown output
     const summary = this.trendAnalyzer.getTrendSummary(metrics, historicalData, currentTrendData.matrixKey);
     const insights = this.trendAnalyzer.getPerformanceInsights(metrics, historicalData, currentTrendData.matrixKey);
     
