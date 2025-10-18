@@ -120,14 +120,14 @@ async function run(): Promise<void> {
     await trendCache.saveTrendData(currentTrendData);
     await gitHubTrendManager.saveTrendArtifact(currentTrendData);
 
-    // Set outputs
-    core.setOutput('total_tests', metrics.totalTests.toString());
-    core.setOutput('passed_tests', metrics.passedTests.toString());
-    core.setOutput('failed_tests', metrics.failedTests.toString());
-    core.setOutput('skipped_tests', metrics.skippedTests.toString());
-    core.setOutput('pass_rate', metrics.passRate.toFixed(2));
-    core.setOutput('total_duration', metrics.totalDuration.toFixed(2));
-    core.setOutput('flaky_tests_count', metrics.flakyTests.length.toString());
+    // Set outputs with safety checks
+    core.setOutput('total_tests', (metrics?.totalTests || 0).toString());
+    core.setOutput('passed_tests', (metrics?.passedTests || 0).toString());
+    core.setOutput('failed_tests', (metrics?.failedTests || 0).toString());
+    core.setOutput('skipped_tests', (metrics?.skippedTests || 0).toString());
+    core.setOutput('pass_rate', (metrics?.passRate || 0).toFixed(2));
+    core.setOutput('total_duration', (metrics?.totalDuration || 0).toFixed(2));
+    core.setOutput('flaky_tests_count', (metrics?.flakyTests?.length || 0).toString());
 
     // Generate job summary
     if (detailedSummary) {
@@ -136,7 +136,7 @@ async function run(): Promise<void> {
     }
 
     // Handle test failures
-    if (metrics.failedTests > 0) {
+    if ((metrics?.failedTests || 0) > 0) {
       const message = `${metrics.failedTests} test(s) failed`;
       
       if (annotateOnly) {
@@ -149,7 +149,7 @@ async function run(): Promise<void> {
     }
 
     // Annotate PR with test results
-    if (includePassed || metrics.failedTests > 0) {
+    if (includePassed || (metrics?.failedTests || 0) > 0) {
       await annotatePullRequest(metrics, annotateOnly);
     }
 

@@ -7,16 +7,26 @@ export async function annotatePullRequest(metrics: any, annotateOnly: boolean): 
     return; // Only annotate on pull requests
   }
 
+  // Safety checks for metrics
+  const safeMetrics = {
+    passRate: metrics?.passRate || 0,
+    passedTests: metrics?.passedTests || 0,
+    totalTests: metrics?.totalTests || 0,
+    failedTests: metrics?.failedTests || 0,
+    totalDuration: metrics?.totalDuration || 0,
+    flakyTests: metrics?.flakyTests || []
+  };
+
   const octokit = github.getOctokit(process.env.GITHUB_TOKEN || '');
   
   const comment = `## 🧪 Test Results
   
-**Status:** ${metrics.passRate >= 95 ? '🟢 All tests passed' : metrics.passRate >= 80 ? '🟡 Some tests failed' : '🔴 Tests failing'}
-**Pass Rate:** ${metrics.passRate.toFixed(1)}% (${metrics.passedTests}/${metrics.totalTests})
-**Duration:** ${metrics.totalDuration.toFixed(1)}s
-${metrics.flakyTests.length > 0 ? `**Flaky Tests:** ${metrics.flakyTests.length}` : ''}
+**Status:** ${safeMetrics.passRate >= 95 ? '🟢 All tests passed' : safeMetrics.passRate >= 80 ? '🟡 Some tests failed' : '🔴 Tests failing'}
+**Pass Rate:** ${safeMetrics.passRate.toFixed(1)}% (${safeMetrics.passedTests}/${safeMetrics.totalTests})
+**Duration:** ${safeMetrics.totalDuration.toFixed(1)}s
+${safeMetrics.flakyTests.length > 0 ? `**Flaky Tests:** ${safeMetrics.flakyTests.length}` : ''}
 
-${metrics.failedTests > 0 ? `⚠️ ${metrics.failedTests} test(s) failed` : '✅ All tests passed!'}`;
+${safeMetrics.failedTests > 0 ? `⚠️ ${safeMetrics.failedTests} test(s) failed` : '✅ All tests passed!'}`;
 
   try {
     await octokit.rest.issues.createComment({
