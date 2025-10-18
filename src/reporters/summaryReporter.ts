@@ -76,7 +76,6 @@ export class SummaryReporter {
 |:-------|:-------:|:--------:|:-----:|
 | 📊 Tests | ${testsStatus} | ${summary?.testCountTrend?.previous || '0'} | ${formatTrend(summary?.testCountTrend)} |
 | ✅ Pass Rate | ${passRateValue} | ${summary?.passRateTrend?.previous?.toFixed(1) || '0.0'}% | ${formatTrend(summary?.passRateTrend)} |
-| ⏱️ Duration | ${durationValue} | ${summary?.durationTrend?.previous?.toFixed(2) || '0.00'}s | ${formatTrend(summary?.durationTrend)} |
 | ⏱️ Test Avg Duration | ${avgDurValue} | N/A | N/A |
 | 🐛 Flaky | ${flakyValue} | ${summary?.flakyTestsTrend?.previous || '0'} | ${formatTrend(summary?.flakyTestsTrend)} |
 
@@ -249,7 +248,6 @@ export class SummaryReporter {
     markdown += `|--------|---------|----------|-------|\n`;
     markdown += `| ■ Tests | ${safeMetrics.totalTests} tests | ${summary.testCountTrend?.previous || '0'} | ${this.formatMarkdownTrendBadge(summary.testCountTrend)} |\n`;
     markdown += `| ✓ Pass Rate | **${safeMetrics.passRate.toFixed(1)}%** | ${summary.passRateTrend?.previous?.toFixed(1) || '0.0'}% | ${this.formatMarkdownTrendBadge(summary.passRateTrend)} |\n`;
-    markdown += `| ● Duration | ${safeMetrics.totalDuration.toFixed(2)}s | ${summary.durationTrend?.previous?.toFixed(2) || '0.00'}s | ${this.formatMarkdownTrendBadge(summary.durationTrend)} |\n`;
     markdown += `| ● Test Avg Duration | ${safeMetrics.averageDuration.toFixed(2)}s | N/A | N/A |\n`;
     markdown += `| ⚡️ Flaky | ${safeMetrics.flakyTests.length} | ${summary.flakyTestsTrend?.previous || '0'} | ${this.formatMarkdownTrendBadge(summary.flakyTestsTrend || { trend: 'stable', changePercent: 0 })} |\n`;
     
