@@ -47,7 +47,7 @@ export class HtmlReporter {
 
     let markdown = `# 🎨 Test Metrics Dashboard (${framework})
 
-## 📄 Test Execution Details (${safeMetrics.passedTests}/${safeMetrics.totalTests} Passed) [${this.formatDuration(safeMetrics.totalDuration)}]
+## 📄 Test Execution Details (${safeMetrics.passedTests}/${safeMetrics.totalTests} Passed)
 
 <table>
 <tr><th>Status</th><th>Count</th><th>Percentage</th></tr>
@@ -70,14 +70,14 @@ export class HtmlReporter {
 <tr><td>■ <b>Tests</b></td><td>${safeMetrics.totalTests} tests</td><td>${summary.testCountTrend?.previous || '0'}</td><td>${this.formatTrendBadge(summary.testCountTrend)}</td></tr>
 <tr><td>✓ <b>Pass Rate</b></td><td><b>${this.getPassRateColor(safeMetrics.passRate)}${safeMetrics.passRate.toFixed(1)}%</b></td><td>${summary.passRateTrend?.previous?.toFixed(1) || '0.0'}%</td><td>${this.formatTrendBadge(summary.passRateTrend)}</td></tr>
 <tr><td>● <b>Duration</b></td><td>${safeMetrics.totalDuration.toFixed(2)}s</td><td>${summary.durationTrend?.previous?.toFixed(2) || '0.00'}s</td><td>${this.formatTrendBadge(summary.durationTrend)}</td></tr>
-<tr><td>● <b>Avg Duration</b></td><td>${safeMetrics.averageDuration.toFixed(2)}s</td><td>—</td><td>—</td></tr>
+<tr><td>● <b>Test Avg Duration</b></td><td>${safeMetrics.averageDuration.toFixed(2)}s</td><td>N/A</td><td>N/A</td></tr>
 <tr><td>⚡️ <b>Flaky</b></td><td>${safeMetrics.flakyTests.length}</td><td>${summary.flakyTestsTrend?.previous || '0'}</td><td>${this.formatTrendBadge(summary.flakyTestsTrend || { trend: 'stable', changePercent: 0 })}</td></tr>`;
 
     if (slowestTest) {
-      markdown += `\n<tr><td>🐌 <b>Slowest Test</b><br/><small>${slowestTest.name}</small></td><td><b>${slowestTest.duration.toFixed(2)}s</b></td><td>—</td><td>—</td></tr>`;
+      markdown += `\n<tr><td>🐌 <b>Slowest Test</b><br/><small>${slowestTest.name}</small></td><td><b>${slowestTest.duration.toFixed(2)}s</b></td><td>N/A</td><td>N/A</td></tr>`;
     }
     
-    markdown += `\n<tr><td>📊 <b>Performance Insights</b><br/><small>${performanceInsight}</small></td><td>—</td><td>—</td><td>—</td></tr>
+    markdown += `\n<tr><td>📊 <b>Performance Insights</b><br/><small>${performanceInsight}</small></td><td>N/A</td><td>N/A</td><td>N/A</td></tr>
 </table>
 
 ---
