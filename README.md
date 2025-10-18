@@ -12,8 +12,6 @@ Advanced test metrics and visual reporting for Jest, Playwright, and JUnit tests
 
 ## 🚀 Quick Start
 
-### Basic Usage
-
 ```yaml
 - name: Publish Test Metrics
   uses: serbangeorge-m/test-metrics-action@v1
@@ -24,90 +22,7 @@ Advanced test metrics and visual reporting for Jest, Playwright, and JUnit tests
     detailed_summary: true
 ```
 
-### Advanced Configuration
-
-```yaml
-- name: Run Tests
-  run: |
-    npm test -- --json --outputFile=test-results.json
-    npx playwright test --reporter=json --output-file=playwright-results.json
-
-## 🚀 Quick Start
-
-```yaml
-- name: Test Metrics
-  uses: serbangeorge-m/test-metrics-action@v1
-  if: always()
-  with:
-    report_paths: '**/*results.xml'
-    fail_on_failure: true
-    detailed_summary: true
-```
-
 ## 🔧 Inputs
-
-| Input | Default | Description |
-|-------|---------|-------------|
-| `report_paths` | `**/*results.xml` | Test result file patterns (glob) |
-| `test_framework` | `auto` | Framework: `auto`, `jest`, `playwright`, `junit` |
-| `detailed_summary` | `true` | Include detailed job summary |
-| `fail_on_failure` | `true` | Fail if tests failed |
-| `retention_days` | `30` | Cache retention (artifacts: 90 days) |
-
-## 📊 What It Does
-
-1. **Parses** test results from multiple frameworks
-2. **Calculates** metrics: pass rate, duration, flakiness, failures
-3. **Tracks** trends over 90 days with GitHub Artifacts
-4. **Reports** with visual summary, tables, and charts
-5. **Annotates** PRs with results (optional)
-
-## 🧪 Supported Formats
-
-- **JUnit XML**: `*.xml` files
-- **Jest JSON**: `--json --outputFile=results.json`
-- **Playwright JSON**: `--reporter=json`
-
-## 📄 License
-
-MIT
-```
-
-## 📊 Advanced Metrics
-
-### Flakiness Detection
-- Identifies tests that fail intermittently
-- Scores tests based on retry patterns and error types
-- Highlights network and timeout-related flakiness
-
-### Performance Analysis
-- Tracks test execution time trends
-- Identifies slowest tests (95th percentile)
-- Compares performance across runs
-
-### Failure Categorization
-- Groups failures by type: timeout, assertion, setup, network, other
-- Provides insights into common failure patterns
-- Helps prioritize test improvements
-
-### Trend Analysis
-- Historical comparison of test metrics
-- Performance regression detection
-- Pass rate trend monitoring
-- Visual trend charts in job summaries
-
-## 🎨 Visual Reports
-
-The action generates rich job summaries with:
-
-- 📊 **Summary Table**: Current vs previous run metrics with trends (tests, pass rate, duration, flaky tests)
-- 📈 **Test Status**: Visual breakdown of passed/failed/skipped with percentages
-- ❌ **Failure Analysis**: Categorized failures (timeout, assertion, setup, network)
-- 🐛 **Flaky Tests**: Detailed flakiness scoring and retry patterns
-- 🐌 **Slow Tests**: Performance bottleneck identification (95th percentile)
-- 📊 **Trend Charts**: ASCII visualization of performance over time
-
-## 🔧 Configuration
 
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
@@ -117,34 +32,18 @@ The action generates rich job summaries with:
 | `fail_on_failure` | Fail action if tests failed | No | `true` |
 | `retention_days` | Days to retain trend data in cache (artifacts: 90 days) | No | `30` |
 | `cache_key_prefix` | Prefix for cache key to separate test suites | No | `test-metrics` |
+| `artifact_suffix` | Suffix for trend artifact name to ensure uniqueness in matrix jobs | No | `''` |
 | `annotate_only` | Only annotate PR, don't fail the action | No | `false` |
 | `include_passed` | Include passed tests in PR annotations | No | `true` |
 | `require_tests` | Require at least one test result | No | `true` |
 
-## 📈 Trend Tracking
+## 📊 What It Does
 
-The action automatically stores test metrics for trend analysis:
-
-- **GitHub Actions Cache**: 30-day rolling history for quick access
-- **GitHub Artifacts**: 90-day retention for long-term analysis
-- **Automatic Cleanup**: Expired data is automatically removed
-
-Trends help you:
-- Detect performance regressions
-- Monitor pass rate improvements
-- Track flaky test patterns
-- Identify slowest tests over time
-
-## 📈 Outputs
-
-| Output | Description |
-|--------|-------------|
-| `total_tests` | Total number of tests |
-| `passed_tests` | Number of passed tests |
-| `failed_tests` | Number of failed tests |
-| `pass_rate` | Test pass rate percentage |
-| `flaky_tests_count` | Number of flaky tests detected |
-| `performance_trend` | Performance trend compared to previous runs |
+1. **Parses** test results from multiple frameworks
+2. **Calculates** metrics: pass rate, duration, flakiness, failures
+3. **Tracks** trends over 90 days with GitHub Artifacts
+4. **Reports** with visual summary, tables, and charts
+5. **Annotates** PRs with results (optional)
 
 ## 🧪 Supported Test Frameworks
 
@@ -161,9 +60,17 @@ Trends help you:
 ```
 
 ### Playwright
+
+For Playwright, make sure to install the browsers before running the tests.
+
 ```yaml
+- name: Install Playwright Browsers
+  run: npx playwright install --with-deps
+
 - name: Run Playwright Tests
-  run: npx playwright test --reporter=json --output-file=playwright-results.json
+  run: npx playwright test --reporter=json
+  env:
+    PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-results.json
 
 - name: Test Metrics
   uses: serbangeorge-m/test-metrics-action@v1
@@ -183,6 +90,47 @@ Trends help you:
     report_paths: '**/junit.xml'
     test_framework: 'junit'
 ```
+
+## 🚀 Matrix Builds
+
+When running this action in a matrix strategy, you might encounter errors with artifact uploads (e.g., `Error: Failed to CreateArtifact: ... an artifact with this name already exists`). This is because each job in the matrix will try to upload an artifact with the same name.
+
+To solve this, use the `artifact_suffix` input to create a unique name for each job's artifact. You can use variables from your matrix context to create the suffix.
+
+**Example:**
+
+```yaml
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node-version: [16, 18]
+
+    steps:
+    - uses: actions/checkout@v4
+    # ... other steps
+    - name: Publish Test Metrics
+      uses: serbangeorge-m/test-metrics-action@v1
+      if: always()
+      with:
+        report_paths: '**/*results.xml'
+        artifact_suffix: ${{ matrix.os }}-${{ matrix.node-version }}
+```
+
+This will create artifacts with names like `test-metrics-trends-junit-ubuntu-latest-16`, `test-metrics-trends-junit-ubuntu-latest-18`, etc., avoiding conflicts.
+
+## 📈 Outputs
+
+| Output | Description |
+|--------|-------------|
+| `total_tests` | Total number of tests |
+| `passed_tests` | Number of passed tests |
+| `failed_tests` | Number of failed tests |
+| `pass_rate` | Test pass rate percentage |
+| `flaky_tests_count` | Number of flaky tests detected |
+| `performance_trend` | Performance trend compared to previous runs |
 
 ## 🤝 Contributing
 

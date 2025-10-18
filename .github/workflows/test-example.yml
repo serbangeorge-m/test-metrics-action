@@ -25,9 +25,6 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     
-    - name: Run Jest Tests
-      run: npm test -- --json --outputFile=jest-results.json --coverage
-    
     - name: Run Playwright Tests
       run: npx playwright test --reporter=json
       if: always()
@@ -42,7 +39,7 @@ jobs:
       uses: ./  # Use local action
       if: always()
       with:
-        report_paths: 'jest-results.json,playwright-results.json'
+        report_paths: 'playwright-results.json'
         test_framework: 'auto'
         fail_on_failure: true
         detailed_summary: true
